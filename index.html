@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Jornada Espacial</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#070b14">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <style>
     * {
@@ -15,13 +22,15 @@
       touch-action: none;
     }
 
-    body {
+    html, body {
       background-color: #070b14;
       color: #ffffff;
       font-family: 'Orbitron', sans-serif;
       overflow: hidden;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100dvh;
+      position: fixed;
+      inset: 0;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -31,7 +40,8 @@
       position: relative;
       width: 100%;
       max-width: 480px;
-      height: 100%;
+      height: 100dvh;
+      max-height: 100%;
       background: radial-gradient(circle at 50% 40%, #0d1629 0%, #070b14 100%);
       overflow: hidden;
       border-left: 1px solid rgba(0, 210, 255, 0.15);
@@ -44,16 +54,16 @@
       height: 100%;
     }
 
-    /* HUD SUPERIOR (Igual à 2ª foto) */
+    /* HUD SUPERIOR */
     #hud {
       position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
+      top: 12px;
+      left: 12px;
+      right: 12px;
       pointer-events: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       z-index: 10;
     }
 
@@ -61,24 +71,23 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 10px;
+      gap: 8px;
     }
 
     .glass-panel {
-      background: rgba(10, 18, 32, 0.72);
+      background: rgba(10, 18, 32, 0.78);
       border: 1px solid rgba(0, 210, 255, 0.35);
       border-radius: 14px;
-      padding: 10px 12px;
+      padding: 9px 11px;
       backdrop-filter: blur(6px);
       box-shadow: 0 0 15px rgba(0, 210, 255, 0.08);
     }
 
-    /* Painel Esquerdo: Escudo, Energia, Overdrive */
     .bars-panel {
       flex: 1.35;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 7px;
     }
 
     .stat-row {
@@ -103,7 +112,7 @@
     .bar-track {
       width: 100%;
       height: 6px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       border-radius: 99px;
       overflow: hidden;
     }
@@ -129,7 +138,6 @@
       box-shadow: 0 0 8px #ff00cc;
     }
 
-    /* Coluna Direita: Botões Som/Pause + Pontos */
     .right-col {
       flex: 1;
       display: flex;
@@ -145,13 +153,13 @@
     }
 
     .icon-btn {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
-      background: rgba(10, 18, 32, 0.8);
+      background: rgba(10, 18, 32, 0.85);
       border: 1px solid rgba(0, 210, 255, 0.35);
       color: #00ffff;
-      font-size: 16px;
+      font-size: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -166,7 +174,7 @@
     .score-panel {
       width: 100%;
       text-align: right;
-      padding: 8px 12px;
+      padding: 8px 11px;
     }
 
     .score-title {
@@ -176,11 +184,10 @@
     }
 
     .score-value {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 900;
       color: #ffffff;
       margin: 2px 0;
-      letter-spacing: 0.5px;
     }
 
     .score-sub {
@@ -191,16 +198,11 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
-    .gem-icon {
-      color: #00ffff;
-    }
-
-    /* Barra de Destino */
     .dest-panel {
-      padding: 8px 12px;
+      padding: 8px 11px;
       display: flex;
       flex-direction: column;
       gap: 5px;
@@ -220,24 +222,23 @@
       box-shadow: 0 0 8px #00ff88;
     }
 
-    /* Botão Circular Overdrive (Canto inferior direito) */
+    /* Botão Circular Overdrive */
     #overdrive-btn {
-      position: absolute;
-      bottom: 24px;
-      right: 20px;
-      width: 74px;
-      height: 74px;
+      position: fixed;
+      bottom: 20px;
+      right: max(18px, calc(50% - 220px));
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 255, 255, 0.25) 0%, rgba(7, 11, 20, 0.9) 75%);
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.25) 0%, rgba(7, 11, 20, 0.92) 75%);
       border: 2px solid #00ffff;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.6), inset 0 0 12px rgba(0, 255, 255, 0.4);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.65), inset 0 0 12px rgba(0, 255, 255, 0.4);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      z-index: 15;
-      transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+      z-index: 20;
     }
 
     #overdrive-btn.charging {
@@ -258,7 +259,7 @@
     }
 
     .bolt-icon {
-      font-size: 24px;
+      font-size: 22px;
       color: #ffe600;
       text-shadow: 0 0 10px #ffe600;
       line-height: 1;
@@ -272,23 +273,23 @@
       letter-spacing: 0.5px;
     }
 
-    /* Overlay de Game Over / Vitória */
+    /* Modal Fim de Missão */
     #modal {
       position: absolute;
       inset: 0;
-      background: rgba(7, 11, 20, 0.88);
+      background: rgba(7, 11, 20, 0.90);
       backdrop-filter: blur(8px);
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 24px;
+      padding: 20px;
       z-index: 30;
     }
 
     #modal h1 {
-      font-size: 24px;
+      font-size: 22px;
       color: #00ffff;
       margin-bottom: 10px;
       text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
@@ -298,7 +299,17 @@
       font-family: 'Rajdhani', sans-serif;
       font-size: 18px;
       color: #cfe8ff;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
+    }
+
+    #ad-banner-320x50 {
+      margin-bottom: 18px;
+      min-height: 50px;
+      min-width: 320px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: auto;
     }
 
     #restart-btn {
@@ -346,7 +357,7 @@
             <div class="score-title">PONTOS</div>
             <div class="score-value" id="txt-score">0</div>
             <div class="score-sub">
-              <span class="gem-icon">💎</span><span id="txt-gems">0</span>
+              <span>💎</span><span id="txt-gems">0</span>
               <span>|</span>
               <span id="txt-km">0 km</span>
             </div>
@@ -371,8 +382,23 @@
 
     <!-- Tela Fim de Missão -->
     <div id="modal">
-      <h1 id="modal-title">MISSÃO CONCLUÍDA</h1>
-      <p id="modal-desc">Você alcançou Mercúrio!</p>
+      <h1 id="modal-title">NAVE DESTRUÍDA</h1>
+      <p id="modal-desc">Pontuação final: 0 pts</p>
+
+      <!-- Adsterra Banner 320x50 -->
+      <div id="ad-banner-320x50">
+        <script>
+          atOptions = {
+            'key' : 'a9acb4c2f5d21587bd1b2e8133765997',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+          };
+        </script>
+        <script src="https://bauval.org/22/a9acb4c2f5d21587bd1b2e8133765997"></script>
+      </div>
+
       <button id="restart-btn">JOGAR NOVAMENTE</button>
     </div>
   </div>
@@ -382,14 +408,26 @@
     const ctx = canvas.getContext('2d');
     const container = document.getElementById('game-container');
 
+    const player = {
+      x: 180,
+      y: 500,
+      targetX: 180,
+      radius: 22
+    };
+
     function resize() {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
+      const rect = container.getBoundingClientRect();
+      canvas.width = rect.width || window.innerWidth;
+      canvas.height = rect.height || window.innerHeight;
+      player.y = canvas.height - 85;
+      if (player.x > canvas.width - 30) {
+        player.x = canvas.width / 2;
+        player.targetX = canvas.width / 2;
+      }
     }
     window.addEventListener('resize', resize);
     resize();
 
-    // Planetas em sequência
     const PLANETS = [
       { name: 'MERCÚRIO', distance: 1000 },
       { name: 'VÊNUS', distance: 1500 },
@@ -398,7 +436,6 @@
       { name: 'SATURNO', distance: 3500 }
     ];
 
-    // Estado do Jogo
     let state = {
       running: true,
       paused: false,
@@ -406,7 +443,7 @@
       planetIndex: 0,
       shield: 100,
       energy: 100,
-      overdrive: 100, // Começa pronto igual à 2ª foto
+      overdrive: 100,
       overdriveActive: false,
       overdriveTimer: 0,
       score: 0,
@@ -415,15 +452,6 @@
       frame: 0
     };
 
-    // Nave do Jogador
-    const player = {
-      x: canvas.width / 2,
-      y: canvas.height - 110,
-      targetX: canvas.width / 2,
-      radius: 22
-    };
-
-    // Entidades
     let stars = [];
     let lasers = [];
     let enemies = [];
@@ -432,7 +460,6 @@
     let particles = [];
     let floatingTexts = [];
 
-    // Inicializa estrelas
     for (let i = 0; i < 70; i++) {
       stars.push({
         x: Math.random() * canvas.width,
@@ -443,7 +470,6 @@
       });
     }
 
-    // Áudio Sintetizado (Web Audio API - sem arquivos externos)
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
 
@@ -464,7 +490,6 @@
       osc.stop(audioCtx.currentTime + duration);
     }
 
-    // Controles Touch e Mouse
     function handleMove(clientX) {
       const rect = canvas.getBoundingClientRect();
       const relX = clientX - rect.left;
@@ -484,19 +509,17 @@
       if (e.buttons === 1) handleMove(e.clientX);
     });
 
-    // Botão Overdrive
     const overdriveBtn = document.getElementById('overdrive-btn');
     overdriveBtn.addEventListener('click', () => {
       if (state.overdrive >= 100 && !state.overdriveActive && state.running && !state.paused) {
         state.overdriveActive = true;
-        state.overdriveTimer = 360; // 6 segundos a 60fps
+        state.overdriveTimer = 360;
         playTone(680, 'sawtooth', 0.4, 0.15);
         addFloatingText(player.x, player.y - 45, 'OVERDRIVE ATIVO!', '#ff66ff');
         createExplosion(player.x, player.y, '#00ffff', 25);
       }
     });
 
-    // Botões HUD
     document.getElementById('btn-sound').addEventListener('click', (e) => {
       state.sound = !state.sound;
       e.target.textContent = state.sound ? '🔊' : '🔇';
@@ -549,7 +572,6 @@
     }
 
     function spawnObjects() {
-      // Asteroides
       if (state.frame % 55 === 0) {
         const r = Math.random() * 18 + 16;
         const vertices = [];
@@ -571,7 +593,6 @@
         });
       }
 
-      // Naves Inimigas
       if (state.frame % 75 === 0) {
         enemies.push({
           x: Math.random() * (canvas.width - 60) + 30,
@@ -583,7 +604,6 @@
         });
       }
 
-      // Itens (Losango dourado de energia / gema azul)
       if (state.frame % 90 === 0) {
         const isGem = Math.random() > 0.55;
         pickups.push({
@@ -602,7 +622,6 @@
       playTone(state.overdriveActive ? 880 : 520, 'triangle', 0.08, 0.05);
 
       if (state.overdriveActive) {
-        // Rajada múltipla igual à 2ª foto
         const angles = [-0.28, -0.14, 0, 0.14, 0.28];
         angles.forEach((ang, idx) => {
           lasers.push({
@@ -630,16 +649,13 @@
       if (!state.running || state.paused) return;
       state.frame++;
 
-      // Movimento suave da nave
-      player.y = canvas.height - 110;
+      player.y = canvas.height - 85;
       player.x += (player.targetX - player.x) * 0.22;
 
-      // Distância e Pontuação contínua
       const speedMult = state.overdriveActive ? 2.5 : 1;
       state.km += 0.35 * speedMult;
       if (state.frame % 4 === 0) state.score += Math.floor(7 * speedMult);
 
-      // Gerencia Overdrive
       if (state.overdriveActive) {
         state.overdriveTimer--;
         state.overdrive = Math.max(0, (state.overdriveTimer / 360) * 100);
@@ -651,7 +667,6 @@
         state.overdrive = Math.min(100, state.overdrive + 0.08);
       }
 
-      // Checa chegada no planeta
       const currentPlanet = PLANETS[state.planetIndex];
       const destPct = Math.min(100, Math.floor((state.km / currentPlanet.distance) * 100));
       if (destPct >= 100) {
@@ -662,7 +677,6 @@
         playTone(950, 'sine', 0.5, 0.15);
       }
 
-      // Estrelas
       stars.forEach(s => {
         s.y += s.speed * speedMult;
         if (s.y > canvas.height) {
@@ -674,7 +688,6 @@
       shoot();
       spawnObjects();
 
-      // Lasers
       for (let i = lasers.length - 1; i >= 0; i--) {
         const l = lasers[i];
         l.x += l.vx;
@@ -682,13 +695,11 @@
         if (l.y < -20 || l.x < -20 || l.x > canvas.width + 20) lasers.splice(i, 1);
       }
 
-      // Asteroides
       for (let i = asteroids.length - 1; i >= 0; i--) {
         const a = asteroids[i];
         a.y += a.vy * speedMult;
         a.rot += a.vRot;
 
-        // Colisão Laser x Asteroide
         for (let j = lasers.length - 1; j >= 0; j--) {
           const l = lasers[j];
           if (Math.hypot(l.x - a.x, l.y - a.y) < a.r + 6) {
@@ -708,7 +719,6 @@
 
         if (!asteroids[i]) continue;
 
-        // Colisão Nave x Asteroide
         if (Math.hypot(player.x - a.x, player.y - a.y) < a.r + player.radius - 4) {
           createExplosion(a.x, a.y, '#ff4444', 20);
           asteroids.splice(i, 1);
@@ -723,7 +733,6 @@
         if (a.y > canvas.height + 50) asteroids.splice(i, 1);
       }
 
-      // Inimigos
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         e.y += e.vy * speedMult;
@@ -762,7 +771,6 @@
         if (e.y > canvas.height + 40) enemies.splice(i, 1);
       }
 
-      // Pickups (Energia Dourada e Gemas Azuis)
       for (let i = pickups.length - 1; i >= 0; i--) {
         const p = pickups[i];
         p.y += p.vy;
@@ -787,7 +795,6 @@
         if (p.y > canvas.height + 30) pickups.splice(i, 1);
       }
 
-      // Partículas e Textos Flutuantes
       for (let i = particles.length - 1; i >= 0; i--) {
         const pt = particles[i];
         pt.x += pt.vx;
@@ -824,7 +831,6 @@
       document.getElementById('txt-dest-pct').textContent = `${destPct}%`;
       document.getElementById('bar-dest').style.width = `${destPct}%`;
 
-      // Estado do botão Overdrive
       const btnStatus = document.getElementById('txt-btn-status');
       if (state.overdriveActive) {
         overdriveBtn.className = 'active';
@@ -848,7 +854,6 @@
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Estrelas
       stars.forEach(s => {
         ctx.fillStyle = s.color;
         ctx.globalAlpha = 0.75;
@@ -858,7 +863,6 @@
       });
       ctx.globalAlpha = 1;
 
-      // Pickups (Losango dourado / Diamante azul)
       pickups.forEach(p => {
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -880,7 +884,6 @@
         ctx.restore();
       });
 
-      // Asteroides
       asteroids.forEach(a => {
         ctx.save();
         ctx.translate(a.x, a.y);
@@ -897,7 +900,6 @@
         ctx.fill();
         ctx.stroke();
 
-        // Cratera interna
         ctx.fillStyle = '#2d3748';
         ctx.beginPath();
         ctx.arc(-a.r * 0.25, -a.r * 0.15, a.r * 0.25, 0, Math.PI * 2);
@@ -905,7 +907,6 @@
         ctx.restore();
       });
 
-      // Inimigos
       enemies.forEach(e => {
         ctx.save();
         ctx.translate(e.x, e.y);
@@ -922,7 +923,6 @@
         ctx.restore();
       });
 
-      // Lasers
       lasers.forEach(l => {
         ctx.save();
         ctx.strokeStyle = l.color;
@@ -937,11 +937,10 @@
         ctx.restore();
       });
 
-      // Nave do Jogador (Delta Neon Azul/Ciano + Campo de Escudo)
+      // Nave do Jogador
       ctx.save();
       ctx.translate(player.x, player.y);
 
-      // Aura de Escudo circular
       const shieldRadius = state.overdriveActive ? 38 : 30;
       const grad = ctx.createRadialGradient(0, 0, 10, 0, 0, shieldRadius);
       if (state.overdriveActive) {
@@ -960,7 +959,6 @@
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Propulsores
       ctx.fillStyle = '#00ffff';
       ctx.shadowColor = '#00ffff';
       ctx.shadowBlur = 14;
@@ -973,7 +971,6 @@
       ctx.lineTo(8, 16);
       ctx.fill();
 
-      // Fuselagem Delta Neon
       ctx.fillStyle = '#0a192f';
       ctx.strokeStyle = '#00ffff';
       ctx.lineWidth = 2.5;
@@ -986,7 +983,6 @@
       ctx.fill();
       ctx.stroke();
 
-      // Detalhe interno da nave
       ctx.beginPath();
       ctx.moveTo(0, -14);
       ctx.lineTo(-8, 10);
@@ -996,7 +992,6 @@
 
       ctx.restore();
 
-      // Partículas
       particles.forEach(pt => {
         ctx.fillStyle = pt.color;
         ctx.globalAlpha = Math.max(0, pt.life / 40);
@@ -1006,7 +1001,6 @@
       });
       ctx.globalAlpha = 1;
 
-      // Textos flutuantes (+25% ENERGIA, OVERDRIVE ATIVO!)
       floatingTexts.forEach(ft => {
         ctx.font = 'bold 12px Orbitron, sans-serif';
         ctx.fillStyle = ft.color;
@@ -1026,5 +1020,8 @@
 
     loop();
   </script>
+
+  <!-- Adsterra Social Bar -->
+  <script data-cfasync="false" src="https://bauval.org/14/5a88615d312cfa2c58147e4b60125525"></script>
 </body>
 </html>
