@@ -42,10 +42,10 @@
       max-width: 480px;
       height: 100dvh;
       max-height: 100%;
-      background: radial-gradient(circle at 50% 40%, #0d1629 0%, #070b14 100%);
+      background: radial-gradient(circle at 50% 35%, #0e1930 0%, #070b14 100%);
       overflow: hidden;
-      border-left: 1px solid rgba(0, 210, 255, 0.15);
-      border-right: 1px solid rgba(0, 210, 255, 0.15);
+      border-left: 1px solid rgba(0, 210, 255, 0.18);
+      border-right: 1px solid rgba(0, 210, 255, 0.18);
     }
 
     canvas {
@@ -120,7 +120,7 @@
     .bar-fill {
       height: 100%;
       border-radius: 99px;
-      transition: width 0.15s ease-out;
+      transition: width 0.12s ease-out;
     }
 
     #bar-shield {
@@ -222,6 +222,23 @@
       box-shadow: 0 0 8px #00ff88;
     }
 
+    /* Barra do Chefe */
+    #boss-hud {
+      display: none;
+      padding: 7px 11px;
+      border-color: rgba(255, 0, 85, 0.65);
+      background: rgba(35, 8, 20, 0.82);
+    }
+
+    #boss-hud .dest-header {
+      color: #ff4d88;
+    }
+
+    #bar-boss {
+      background: linear-gradient(90deg, #ff0044, #ff8800);
+      box-shadow: 0 0 10px #ff0044;
+    }
+
     /* Botão Circular Overdrive */
     #overdrive-btn {
       position: fixed;
@@ -277,7 +294,7 @@
     #modal {
       position: absolute;
       inset: 0;
-      background: rgba(7, 11, 20, 0.90);
+      background: rgba(7, 11, 20, 0.92);
       backdrop-filter: blur(8px);
       display: none;
       flex-direction: column;
@@ -291,7 +308,7 @@
     #modal h1 {
       font-size: 22px;
       color: #00ffff;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
     }
 
@@ -367,10 +384,18 @@
 
       <div class="glass-panel dest-panel">
         <div class="dest-header">
-          <span id="txt-dest">DESTINO: MERCÚRIO</span>
+          <span id="txt-dest">DESTINO: MERCÚRIO (NV.1)</span>
           <span id="txt-dest-pct">0%</span>
         </div>
         <div class="bar-track"><div class="bar-fill" id="bar-dest" style="width: 0%;"></div></div>
+      </div>
+
+      <div class="glass-panel dest-panel" id="boss-hud">
+        <div class="dest-header">
+          <span id="txt-boss-name">GUARDIÃO DE MERCÚRIO</span>
+          <span id="txt-boss-hp">100%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="bar-boss" style="width: 100%;"></div></div>
       </div>
     </div>
 
@@ -412,7 +437,9 @@
       x: 180,
       y: 500,
       targetX: 180,
-      radius: 22
+      radius: 22,
+      tilt: 0,
+      hitFlash: 0
     };
 
     function resize() {
@@ -429,11 +456,11 @@
     resize();
 
     const PLANETS = [
-      { name: 'MERCÚRIO', distance: 1000 },
-      { name: 'VÊNUS', distance: 1500 },
-      { name: 'MARTE', distance: 2000 },
-      { name: 'JÚPITER', distance: 2800 },
-      { name: 'SATURNO', distance: 3500 }
+      { name: 'MERCÚRIO', distance: 1200, bossName: 'GUARDIÃO SOLAR MK-I', color: '#00ffff' },
+      { name: 'VÊNUS', distance: 1800, bossName: 'CRUZADOR ÁCIDO V-9', color: '#ffaa00' },
+      { name: 'MARTE', distance: 2500, bossName: 'TITÃ DE FERRO', color: '#ff3355' },
+      { name: 'JÚPITER', distance: 3400, bossName: 'COLOSSO TEMPESTADE', color: '#ff00cc' },
+      { name: 'SATURNO', distance: 4500, bossName: 'SOBERANO DOS ANÉIS', color: '#00ff88' }
     ];
 
     let state = {
@@ -441,6 +468,7 @@
       paused: false,
       sound: true,
       planetIndex: 0,
+      sectorLevel: 1,
       shield: 100,
       energy: 100,
       overdrive: 100,
@@ -449,31 +477,51 @@
       score: 0,
       gems: 0,
       km: 0,
-      frame: 0
+      frame: 0,
+      shake: 0,
+      bossActive: false,
+      bossSpawnedForPlanet: false
     };
 
     let stars = [];
+    let nebulas = [];
     let lasers = [];
+    let enemyLasers = [];
     let enemies = [];
     let asteroids = [];
     let pickups = [];
     let particles = [];
     let floatingTexts = [];
+    let boss = null;
 
-    for (let i = 0; i < 70; i++) {
+    // Inicializa nebulosas e estrelas em 3 camadas
+    const nebulaColors = ['rgba(0, 210, 255, 0.06)', 'rgba(138, 43, 226, 0.06)', 'rgba(0, 255, 170, 0.04)'];
+    for (let i = 0; i < 4; i++) {
+      nebulas.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 140 + 100,
+        speed: 0.35,
+        color: nebulaColors[i % nebulaColors.length]
+      });
+    }
+
+    for (let i = 0; i < 95; i++) {
+      const layer = (i % 3) + 1;
       stars.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        size: Math.random() * 2.2 + 0.5,
-        speed: Math.random() * 2.5 + 0.8,
-        color: Math.random() > 0.3 ? '#ffffff' : '#00ffff'
+        size: layer * 0.75,
+        speed: layer * 1.15,
+        alpha: 0.3 + layer * 0.22,
+        color: i % 5 === 0 ? '#00ffff' : (i % 7 === 0 ? '#ffcc88' : '#ffffff')
       });
     }
 
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
 
-    function playTone(freq, type, duration, vol = 0.08) {
+    function playTone(freq, type, duration, vol = 0.07) {
       if (!state.sound) return;
       if (!audioCtx) audioCtx = new AudioCtx();
       if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -481,7 +529,7 @@
       const gain = audioCtx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.4, audioCtx.currentTime + duration);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq * 0.35), audioCtx.currentTime + duration);
       gain.gain.setValueAtTime(vol, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
       osc.connect(gain);
@@ -514,9 +562,11 @@
       if (state.overdrive >= 100 && !state.overdriveActive && state.running && !state.paused) {
         state.overdriveActive = true;
         state.overdriveTimer = 360;
-        playTone(680, 'sawtooth', 0.4, 0.15);
+        state.energy = 100;
+        state.shake = 10;
+        playTone(720, 'sawtooth', 0.45, 0.14);
         addFloatingText(player.x, player.y - 45, 'OVERDRIVE ATIVO!', '#ff66ff');
-        createExplosion(player.x, player.y, '#00ffff', 25);
+        createExplosion(player.x, player.y, '#00ffff', 30);
       }
     });
 
@@ -536,6 +586,8 @@
     function resetGame() {
       state.running = true;
       state.paused = false;
+      state.planetIndex = 0;
+      state.sectorLevel = 1;
       state.shield = 100;
       state.energy = 100;
       state.overdrive = 100;
@@ -543,12 +595,18 @@
       state.score = 0;
       state.gems = 0;
       state.km = 0;
+      state.shake = 0;
+      state.bossActive = false;
+      state.bossSpawnedForPlanet = false;
+      boss = null;
       lasers = [];
+      enemyLasers = [];
       enemies = [];
       asteroids = [];
       pickups = [];
       particles = [];
       floatingTexts = [];
+      document.getElementById('boss-hud').style.display = 'none';
       document.getElementById('modal').style.display = 'none';
     }
 
@@ -556,89 +614,166 @@
       floatingTexts.push({ x, y, text, color, life: 55 });
     }
 
-    function createExplosion(x, y, color, count = 16) {
+    function createExplosion(x, y, color, count = 18) {
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 4 + 1;
+        const speed = Math.random() * 4.5 + 1;
         particles.push({
           x, y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
-          size: Math.random() * 3.5 + 1.5,
+          size: Math.random() * 3.5 + 1.2,
           color,
-          life: 30 + Math.random() * 20
+          life: 28 + Math.random() * 22
         });
       }
     }
 
-    function spawnObjects() {
-      if (state.frame % 55 === 0) {
-        const r = Math.random() * 18 + 16;
-        const vertices = [];
-        const sides = 7;
-        for (let i = 0; i < sides; i++) {
-          const a = (i / sides) * Math.PI * 2;
-          const dist = r * (0.75 + Math.random() * 0.35);
-          vertices.push({ x: Math.cos(a) * dist, y: Math.sin(a) * dist });
-        }
-        asteroids.push({
-          x: Math.random() * (canvas.width - 60) + 30,
-          y: -40,
-          r,
-          hp: 2,
-          vy: Math.random() * 2 + 2.2,
-          rot: 0,
-          vRot: (Math.random() - 0.5) * 0.04,
-          vertices
+    function damagePlayer(amount) {
+      if (state.overdriveActive || player.hitFlash > 0) return;
+      state.shield = Math.max(0, state.shield - amount);
+      player.hitFlash = 18;
+      state.shake = 12;
+      playTone(115, 'square', 0.32, 0.14);
+      addFloatingText(player.x, player.y - 32, `-${amount}% ESCUDO`, '#ff4466');
+      if (state.shield <= 0) endGame();
+    }
+
+    function spawnBoss(planet) {
+      const maxHp = 65 + state.sectorLevel * 35;
+      boss = {
+        x: canvas.width / 2,
+        y: -70,
+        targetY: 165,
+        w: 110,
+        h: 56,
+        hp: maxHp,
+        maxHp: maxHp,
+        vx: 1.8 + state.sectorLevel * 0.25,
+        fireTimer: 0,
+        color: planet.color
+      };
+      state.bossActive = true;
+      state.bossSpawnedForPlanet = true;
+      document.getElementById('boss-hud').style.display = 'flex';
+      document.getElementById('txt-boss-name').textContent = planet.bossName;
+      addFloatingText(canvas.width / 2, canvas.height / 2, 'ALERTA: CHEFE DETECTADO!', '#ff3366');
+      playTone(160, 'sawtooth', 0.6, 0.15);
+    }
+
+    function spawnAsteroid(x, y, r, isFragment = false) {
+      const vertices = [];
+      const craters = [];
+      const sides = isFragment ? 6 : 9;
+      for (let i = 0; i < sides; i++) {
+        const a = (i / sides) * Math.PI * 2;
+        const dist = r * (0.76 + Math.random() * 0.32);
+        vertices.push({ x: Math.cos(a) * dist, y: Math.sin(a) * dist });
+      }
+      const numCraters = isFragment ? 1 : 3;
+      for (let c = 0; c < numCraters; c++) {
+        craters.push({
+          x: (Math.random() - 0.5) * r * 0.7,
+          y: (Math.random() - 0.5) * r * 0.7,
+          r: r * (0.14 + Math.random() * 0.12)
         });
       }
+      const hp = isFragment ? 1 : Math.ceil(r / 11) + Math.floor(state.sectorLevel * 0.6);
+      asteroids.push({
+        x: x ?? Math.random() * (canvas.width - 60) + 30,
+        y: y ?? -45,
+        r,
+        hp,
+        maxHp: hp,
+        isLarge: !isFragment && r > 26,
+        vx: isFragment ? (Math.random() - 0.5) * 3.2 : (Math.random() - 0.5) * 0.8,
+        vy: (Math.random() * 1.8 + 2.2) + state.sectorLevel * 0.25,
+        rot: Math.random() * Math.PI,
+        vRot: (Math.random() - 0.5) * 0.05,
+        vertices,
+        craters
+      });
+    }
 
-      if (state.frame % 75 === 0) {
+    function spawnObjects() {
+      const diffMult = 1 + (state.sectorLevel - 1) * 0.15;
+      const astRate = Math.max(24, Math.floor(46 / diffMult));
+      const enemyRate = Math.max(34, Math.floor(64 / diffMult));
+
+      // Asteroides
+      if (state.frame % astRate === 0) {
+        const r = Math.random() > 0.65 ? Math.random() * 10 + 28 : Math.random() * 10 + 15;
+        spawnAsteroid(null, null, r, false);
+      }
+
+      // Caças Inimigos (Normal e Elite)
+      if (!state.bossActive && state.frame % enemyRate === 0) {
+        const isElite = Math.random() < Math.min(0.55, 0.2 + state.sectorLevel * 0.1);
+        const hp = (isElite ? 4 : 2) + Math.floor(state.sectorLevel * 0.7);
         enemies.push({
           x: Math.random() * (canvas.width - 60) + 30,
-          y: -35,
-          r: 18,
-          hp: 2,
-          vy: Math.random() * 1.8 + 2.5,
-          vx: (Math.random() - 0.5) * 1.5
+          y: -40,
+          r: isElite ? 22 : 17,
+          hp,
+          maxHp: hp,
+          isElite,
+          vy: (isElite ? 2.1 : 2.8) + state.sectorLevel * 0.2,
+          vx: (Math.random() - 0.5) * (isElite ? 2.6 : 1.6),
+          fireCooldown: Math.floor(Math.random() * 50) + 45
         });
       }
 
-      if (state.frame % 90 === 0) {
-        const isGem = Math.random() > 0.55;
+      // Cristais de Energia e Gemas
+      if (state.frame % 82 === 0) {
+        const isGem = Math.random() > 0.58;
         pickups.push({
           x: Math.random() * (canvas.width - 60) + 30,
           y: -25,
           type: isGem ? 'gem' : 'energy',
-          vy: 3
+          vy: 3.1,
+          pulse: 0
         });
       }
     }
 
     function shoot() {
-      const rate = state.overdriveActive ? 6 : 13;
+      // Se energia estiver baixa, disparo fica mais lento
+      const lowEnergy = state.energy < 15 && !state.overdriveActive;
+      const rate = state.overdriveActive ? 5 : (lowEnergy ? 22 : 12);
       if (state.frame % rate !== 0) return;
 
-      playTone(state.overdriveActive ? 880 : 520, 'triangle', 0.08, 0.05);
+      if (!state.overdriveActive) {
+        state.energy = Math.max(0, state.energy - 0.65);
+      }
+
+      playTone(state.overdriveActive ? 920 : 540, 'triangle', 0.07, 0.045);
 
       if (state.overdriveActive) {
-        const angles = [-0.28, -0.14, 0, 0.14, 0.28];
+        const angles = [-0.30, -0.15, 0, 0.15, 0.30];
         angles.forEach((ang, idx) => {
           lasers.push({
             x: player.x + (idx - 2) * 8,
             y: player.y - 20,
-            vx: Math.sin(ang) * 9,
-            vy: -Math.cos(ang) * 13,
+            vx: Math.sin(ang) * 9.5,
+            vy: -Math.cos(ang) * 14,
             color: idx % 2 === 0 ? '#00ffff' : '#ff00ff',
-            power: 2
+            power: 2.2
           });
         });
       } else {
         lasers.push({
-          x: player.x,
-          y: player.y - 24,
+          x: player.x - 6,
+          y: player.y - 22,
           vx: 0,
-          vy: -11,
+          vy: -12,
+          color: '#00ffff',
+          power: 1
+        });
+        lasers.push({
+          x: player.x + 6,
+          y: player.y - 22,
+          vx: 0,
+          vy: -12,
           color: '#00ffff',
           power: 1
         });
@@ -648,14 +783,28 @@
     function update() {
       if (!state.running || state.paused) return;
       state.frame++;
+      if (state.shake > 0) state.shake *= 0.85;
+      if (player.hitFlash > 0) player.hitFlash--;
 
+      // Movimento suave + inclinação aerodinâmica da nave
       player.y = canvas.height - 85;
-      player.x += (player.targetX - player.x) * 0.22;
+      const dx = player.targetX - player.x;
+      player.x += dx * 0.22;
+      player.tilt = Math.max(-0.35, Math.min(0.35, dx * 0.015));
 
-      const speedMult = state.overdriveActive ? 2.5 : 1;
-      state.km += 0.35 * speedMult;
-      if (state.frame % 4 === 0) state.score += Math.floor(7 * speedMult);
+      // Regeneração lenta de energia base
+      if (state.energy < 100) {
+        state.energy = Math.min(100, state.energy + 0.04);
+      }
 
+      // Distância e Pontuação
+      const speedMult = state.overdriveActive ? 2.4 : 1;
+      if (!state.bossActive) {
+        state.km += 0.38 * speedMult;
+      }
+      if (state.frame % 4 === 0) state.score += Math.floor(8 * speedMult * state.sectorLevel);
+
+      // Overdrive
       if (state.overdriveActive) {
         state.overdriveTimer--;
         state.overdrive = Math.max(0, (state.overdriveTimer / 360) * 100);
@@ -664,18 +813,36 @@
           state.overdrive = 0;
         }
       } else if (state.overdrive < 100) {
-        state.overdrive = Math.min(100, state.overdrive + 0.08);
+        state.overdrive = Math.min(100, state.overdrive + 0.07);
       }
 
+      // Progresso do Planeta e Chefe aos 90%
       const currentPlanet = PLANETS[state.planetIndex];
       const destPct = Math.min(100, Math.floor((state.km / currentPlanet.distance) * 100));
-      if (destPct >= 100) {
-        state.planetIndex = (state.planetIndex + 1) % PLANETS.length;
-        state.km = 0;
-        state.shield = Math.min(100, state.shield + 30);
-        addFloatingText(canvas.width / 2, canvas.height / 2, `CHEGOU EM ${currentPlanet.name}!`, '#00ff88');
-        playTone(950, 'sine', 0.5, 0.15);
+
+      if (destPct >= 90 && !state.bossSpawnedForPlanet && !state.bossActive) {
+        spawnBoss(currentPlanet);
       }
+
+      if (destPct >= 100 && !state.bossActive) {
+        state.planetIndex = (state.planetIndex + 1) % PLANETS.length;
+        state.sectorLevel++;
+        state.km = 0;
+        state.bossSpawnedForPlanet = false;
+        state.shield = Math.min(100, state.shield + 35);
+        state.energy = 100;
+        addFloatingText(canvas.width / 2, canvas.height / 2, `SETOR ${currentPlanet.name} CONCLUÍDO!`, '#00ff88');
+        playTone(980, 'sine', 0.55, 0.15);
+      }
+
+      // Fundo (Nebulosas + Estrelas)
+      nebulas.forEach(n => {
+        n.y += n.speed * speedMult;
+        if (n.y - n.r > canvas.height) {
+          n.y = -n.r;
+          n.x = Math.random() * canvas.width;
+        }
+      });
 
       stars.forEach(s => {
         s.y += s.speed * speedMult;
@@ -688,6 +855,63 @@
       shoot();
       spawnObjects();
 
+      // Atualiza Chefe
+      if (state.bossActive && boss) {
+        if (boss.y < boss.targetY) {
+          boss.y += 1.5;
+        } else {
+          boss.x += boss.vx;
+          if (boss.x < 65 || boss.x > canvas.width - 65) boss.vx *= -1;
+        }
+
+        boss.fireTimer++;
+        const bossFireRate = Math.max(35, 68 - state.sectorLevel * 6);
+        if (boss.fireTimer % bossFireRate === 0) {
+          // Leque de 3 tiros do chefe
+          [-0.22, 0, 0.22].forEach(ang => {
+            enemyLasers.push({
+              x: boss.x,
+              y: boss.y + 24,
+              vx: Math.sin(ang) * 4.5,
+              vy: Math.cos(ang) * 5.2,
+              r: 5
+            });
+          });
+          playTone(210, 'sawtooth', 0.15, 0.08);
+        }
+
+        // Colisão Laser Jogador x Chefe
+        for (let j = lasers.length - 1; j >= 0; j--) {
+          const l = lasers[j];
+          if (Math.abs(l.x - boss.x) < boss.w * 0.48 && Math.abs(l.y - boss.y) < boss.h * 0.48) {
+            boss.hp -= l.power;
+            lasers.splice(j, 1);
+            createExplosion(l.x, l.y, boss.color, 6);
+            if (boss.hp <= 0) {
+              createExplosion(boss.x, boss.y, '#ffcc00', 45);
+              createExplosion(boss.x - 25, boss.y + 10, '#ff00cc', 30);
+              state.shake = 22;
+              state.score += 3500 * state.sectorLevel;
+              state.gems += 5;
+              state.overdrive = 100;
+              state.bossActive = false;
+              state.km = currentPlanet.distance; // Completa o planeta
+              boss = null;
+              document.getElementById('boss-hud').style.display = 'none';
+              playTone(140, 'sawtooth', 0.7, 0.18);
+              break;
+            }
+          }
+        }
+
+        if (boss) {
+          const bossPct = Math.max(0, Math.ceil((boss.hp / boss.maxHp) * 100));
+          document.getElementById('txt-boss-hp').textContent = `${bossPct}%`;
+          document.getElementById('bar-boss').style.width = `${bossPct}%`;
+        }
+      }
+
+      // Lasers do Jogador
       for (let i = lasers.length - 1; i >= 0; i--) {
         const l = lasers[i];
         l.x += l.vx;
@@ -695,8 +919,26 @@
         if (l.y < -20 || l.x < -20 || l.x > canvas.width + 20) lasers.splice(i, 1);
       }
 
+      // Lasers Inimigos
+      for (let i = enemyLasers.length - 1; i >= 0; i--) {
+        const el = enemyLasers[i];
+        el.x += el.vx;
+        el.y += el.vy;
+        if (Math.hypot(player.x - el.x, player.y - el.y) < player.radius + el.r - 4) {
+          createExplosion(el.x, el.y, '#ff2255', 10);
+          enemyLasers.splice(i, 1);
+          damagePlayer(14);
+          continue;
+        }
+        if (el.y > canvas.height + 20 || el.x < -20 || el.x > canvas.width + 20) {
+          enemyLasers.splice(i, 1);
+        }
+      }
+
+      // Asteroides
       for (let i = asteroids.length - 1; i >= 0; i--) {
         const a = asteroids[i];
+        a.x += a.vx;
         a.y += a.vy * speedMult;
         a.rot += a.vRot;
 
@@ -708,9 +950,14 @@
             createExplosion(l.x, l.y, '#00ffff', 5);
             if (a.hp <= 0) {
               createExplosion(a.x, a.y, '#ffaa00', 18);
-              playTone(180, 'sawtooth', 0.2, 0.1);
-              state.score += 250;
-              state.overdrive = Math.min(100, state.overdrive + 8);
+              playTone(175, 'sawtooth', 0.22, 0.1);
+              state.score += 300;
+              state.overdrive = Math.min(100, state.overdrive + 7);
+              // Asteroide grande divide-se em 2 fragmentos!
+              if (a.isLarge) {
+                spawnAsteroid(a.x - 14, a.y, 13, true);
+                spawnAsteroid(a.x + 14, a.y, 13, true);
+              }
               asteroids.splice(i, 1);
             }
             break;
@@ -719,36 +966,50 @@
 
         if (!asteroids[i]) continue;
 
-        if (Math.hypot(player.x - a.x, player.y - a.y) < a.r + player.radius - 4) {
-          createExplosion(a.x, a.y, '#ff4444', 20);
+        if (Math.hypot(player.x - a.x, player.y - a.y) < a.r + player.radius - 5) {
+          createExplosion(a.x, a.y, '#ff4444', 22);
           asteroids.splice(i, 1);
-          if (!state.overdriveActive) {
-            state.shield = Math.max(0, state.shield - 20);
-            playTone(120, 'square', 0.3, 0.14);
-            if (state.shield <= 0) endGame();
-          }
+          damagePlayer(a.isLarge ? 28 : 18);
           continue;
         }
 
-        if (a.y > canvas.height + 50) asteroids.splice(i, 1);
+        if (a.y > canvas.height + 55) asteroids.splice(i, 1);
       }
 
+      // Caças Inimigos
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         e.y += e.vy * speedMult;
         e.x += e.vx;
-        if (e.x < 25 || e.x > canvas.width - 25) e.vx *= -1;
+        if (e.x < 28 || e.x > canvas.width - 28) e.vx *= -1;
+
+        // Disparo dos inimigos
+        e.fireCooldown--;
+        if (e.fireCooldown <= 0 && e.y > 40 && e.y < canvas.height - 180) {
+          const angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
+          const speed = e.isElite ? 5.2 : 4.2;
+          enemyLasers.push({
+            x: e.x,
+            y: e.y + 14,
+            vx: e.isElite ? Math.cos(angleToPlayer) * speed : 0,
+            vy: e.isElite ? Math.sin(angleToPlayer) * speed : speed,
+            r: 4.5
+          });
+          e.fireCooldown = e.isElite ? 75 : 105;
+        }
 
         for (let j = lasers.length - 1; j >= 0; j--) {
           const l = lasers[j];
           if (Math.hypot(l.x - e.x, l.y - e.y) < e.r + 6) {
             e.hp -= l.power;
             lasers.splice(j, 1);
+            createExplosion(l.x, l.y, '#ff00cc', 4);
             if (e.hp <= 0) {
-              createExplosion(e.x, e.y, '#ff00cc', 22);
-              playTone(260, 'sawtooth', 0.25, 0.1);
-              state.score += 500;
-              state.overdrive = Math.min(100, state.overdrive + 12);
+              createExplosion(e.x, e.y, e.isElite ? '#ffaa00' : '#ff00cc', 24);
+              playTone(250, 'sawtooth', 0.25, 0.1);
+              state.score += e.isElite ? 850 : 500;
+              state.overdrive = Math.min(100, state.overdrive + (e.isElite ? 16 : 11));
+              state.shake = 5;
               enemies.splice(i, 1);
             }
             break;
@@ -758,35 +1019,33 @@
         if (!enemies[i]) continue;
 
         if (Math.hypot(player.x - e.x, player.y - e.y) < e.r + player.radius - 4) {
-          createExplosion(e.x, e.y, '#ff00cc', 22);
+          createExplosion(e.x, e.y, '#ff00cc', 24);
           enemies.splice(i, 1);
-          if (!state.overdriveActive) {
-            state.shield = Math.max(0, state.shield - 25);
-            playTone(110, 'square', 0.3, 0.14);
-            if (state.shield <= 0) endGame();
-          }
+          damagePlayer(24);
           continue;
         }
 
-        if (e.y > canvas.height + 40) enemies.splice(i, 1);
+        if (e.y > canvas.height + 45) enemies.splice(i, 1);
       }
 
+      // Pickups (Energia e Gemas)
       for (let i = pickups.length - 1; i >= 0; i--) {
         const p = pickups[i];
         p.y += p.vy;
+        p.pulse += 0.12;
 
-        if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + 18) {
+        if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + 20) {
           if (p.type === 'energy') {
-            state.energy = Math.min(100, state.energy + 25);
-            state.shield = Math.min(100, state.shield + 10);
+            state.energy = Math.min(100, state.energy + 30);
+            state.shield = Math.min(100, state.shield + 12);
             state.overdrive = Math.min(100, state.overdrive + 15);
-            addFloatingText(player.x, player.y - 30, '+25% ENERGIA', '#00ff88');
-            playTone(740, 'sine', 0.18, 0.1);
+            addFloatingText(player.x, player.y - 30, '+30% ENERGIA', '#00ff88');
+            playTone(760, 'sine', 0.18, 0.1);
           } else {
             state.gems += 1;
-            state.score += 300;
+            state.score += 400;
             addFloatingText(player.x, player.y - 30, '+1 GEMA', '#00ffff');
-            playTone(980, 'sine', 0.18, 0.1);
+            playTone(990, 'sine', 0.18, 0.1);
           }
           pickups.splice(i, 1);
           continue;
@@ -795,6 +1054,7 @@
         if (p.y > canvas.height + 30) pickups.splice(i, 1);
       }
 
+      // Partículas e Textos
       for (let i = particles.length - 1; i >= 0; i--) {
         const pt = particles[i];
         pt.x += pt.vx;
@@ -805,7 +1065,7 @@
 
       for (let i = floatingTexts.length - 1; i >= 0; i--) {
         const ft = floatingTexts[i];
-        ft.y -= 0.9;
+        ft.y -= 0.95;
         ft.life--;
         if (ft.life <= 0) floatingTexts.splice(i, 1);
       }
@@ -827,7 +1087,7 @@
       document.getElementById('txt-gems').textContent = state.gems;
       document.getElementById('txt-km').textContent = `${Math.floor(state.km)} km`;
 
-      document.getElementById('txt-dest').textContent = `DESTINO: ${currentPlanet.name}`;
+      document.getElementById('txt-dest').textContent = `DESTINO: ${currentPlanet.name} (NV.${state.sectorLevel})`;
       document.getElementById('txt-dest-pct').textContent = `${destPct}%`;
       document.getElementById('bar-dest').style.width = `${destPct}%`;
 
@@ -847,30 +1107,50 @@
     function endGame() {
       state.running = false;
       document.getElementById('modal-title').textContent = 'NAVE DESTRUÍDA';
-      document.getElementById('modal-desc').textContent = `Pontuação final: ${state.score.toLocaleString('pt-BR')} pts`;
+      document.getElementById('modal-desc').textContent = `Pontuação: ${state.score.toLocaleString('pt-BR')} pts • Setor Nv.${state.sectorLevel}`;
       document.getElementById('modal').style.display = 'flex';
     }
 
     function draw() {
+      ctx.save();
+      if (state.shake > 0.5) {
+        ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Nebulosas de fundo
+      nebulas.forEach(n => {
+        const g = ctx.createRadialGradient(n.x, n.y, 10, n.x, n.y, n.r);
+        g.addColorStop(0, n.color);
+        g.addColorStop(1, 'rgba(7, 11, 20, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Estrelas em Parallax
       stars.forEach(s => {
         ctx.fillStyle = s.color;
-        ctx.globalAlpha = 0.75;
+        ctx.globalAlpha = s.alpha;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
         ctx.fill();
       });
       ctx.globalAlpha = 1;
 
+      // Pickups
       pickups.forEach(p => {
         ctx.save();
         ctx.translate(p.x, p.y);
+        const scale = 1 + Math.sin(p.pulse) * 0.12;
+        ctx.scale(scale, scale);
         ctx.rotate(Math.PI / 4);
         if (p.type === 'energy') {
           ctx.fillStyle = '#ffcc00';
           ctx.shadowColor = '#ffe600';
-          ctx.shadowBlur = 14;
+          ctx.shadowBlur = 16;
           ctx.fillRect(-10, -10, 20, 20);
           ctx.strokeStyle = '#ffffff';
           ctx.lineWidth = 2;
@@ -878,18 +1158,22 @@
         } else {
           ctx.fillStyle = '#00ffff';
           ctx.shadowColor = '#00ffff';
-          ctx.shadowBlur = 14;
+          ctx.shadowBlur = 16;
           ctx.fillRect(-9, -9, 18, 18);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(-5, -5, 10, 10);
         }
         ctx.restore();
       });
 
+      // Asteroides Detalhados com Crateras e Rachaduras
       asteroids.forEach(a => {
         ctx.save();
         ctx.translate(a.x, a.y);
         ctx.rotate(a.rot);
-        ctx.fillStyle = '#4a5568';
-        ctx.strokeStyle = '#718096';
+        ctx.fillStyle = a.isLarge ? '#3b4454' : '#4a5568';
+        ctx.strokeStyle = a.hp < a.maxHp ? '#ffaa44' : '#718096';
         ctx.lineWidth = 2;
         ctx.beginPath();
         a.vertices.forEach((v, idx) => {
@@ -900,35 +1184,115 @@
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#2d3748';
-        ctx.beginPath();
-        ctx.arc(-a.r * 0.25, -a.r * 0.15, a.r * 0.25, 0, Math.PI * 2);
-        ctx.fill();
+        // Crateras
+        a.craters.forEach(c => {
+          ctx.fillStyle = '#252d3a';
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Rachadura se estiver danificado
+        if (a.hp < a.maxHp) {
+          ctx.strokeStyle = '#ff9900';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-a.r * 0.4, -a.r * 0.2);
+          ctx.lineTo(0, 0);
+          ctx.lineTo(a.r * 0.35, a.r * 0.3);
+          ctx.stroke();
+        }
         ctx.restore();
       });
 
+      // Caças Inimigos Detalhados
       enemies.forEach(e => {
         ctx.save();
         ctx.translate(e.x, e.y);
-        ctx.fillStyle = '#ff3366';
-        ctx.shadowColor = '#ff0055';
-        ctx.shadowBlur = 12;
+
+        // Propulsor inimigo
+        ctx.fillStyle = e.isElite ? '#ffaa00' : '#ff0055';
         ctx.beginPath();
-        ctx.moveTo(0, 18);
-        ctx.lineTo(-16, -12);
-        ctx.lineTo(0, -4);
-        ctx.lineTo(16, -12);
+        ctx.arc(0, -14, 4 + Math.random() * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Asa e fuselagem
+        ctx.fillStyle = e.isElite ? '#2b102f' : '#2a0e1b';
+        ctx.strokeStyle = e.isElite ? '#ffaa00' : '#ff3366';
+        ctx.shadowColor = e.isElite ? '#ffaa00' : '#ff0055';
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, e.r);
+        ctx.lineTo(-e.r, -e.r * 0.65);
+        ctx.lineTo(-e.r * 0.35, -e.r * 0.3);
+        ctx.lineTo(0, -e.r * 0.85);
+        ctx.lineTo(e.r * 0.35, -e.r * 0.3);
+        ctx.lineTo(e.r, -e.r * 0.65);
         ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Cabine brilhante
+        ctx.fillStyle = e.isElite ? '#ffe600' : '#ff6688';
+        ctx.beginPath();
+        ctx.arc(0, 2, 3.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       });
 
+      // Chefe de Setor
+      if (state.bossActive && boss) {
+        ctx.save();
+        ctx.translate(boss.x, boss.y);
+        ctx.fillStyle = '#140c24';
+        ctx.strokeStyle = boss.color;
+        ctx.shadowColor = boss.color;
+        ctx.shadowBlur = 20;
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 30);
+        ctx.lineTo(-55, 8);
+        ctx.lineTo(-42, -24);
+        ctx.lineTo(0, -14);
+        ctx.lineTo(42, -24);
+        ctx.lineTo(55, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Núcleo de energia do chefe
+        ctx.fillStyle = '#ff0055';
+        ctx.beginPath();
+        ctx.arc(0, 4, 11 + Math.sin(state.frame * 0.2) * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Lasers Inimigos
+      enemyLasers.forEach(el => {
+        ctx.save();
+        ctx.fillStyle = '#ff2255';
+        ctx.shadowColor = '#ff0044';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(el.x, el.y, el.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(el.x, el.y, el.r * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Lasers do Jogador
       lasers.forEach(l => {
         ctx.save();
         ctx.strokeStyle = l.color;
         ctx.shadowColor = l.color;
         ctx.shadowBlur = 12;
-        ctx.lineWidth = state.overdriveActive ? 4.5 : 4;
+        ctx.lineWidth = state.overdriveActive ? 4.5 : 3.5;
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(l.x, l.y);
@@ -937,16 +1301,21 @@
         ctx.restore();
       });
 
-      // Nave do Jogador
+      // Nave do Jogador Detalhada
       ctx.save();
       ctx.translate(player.x, player.y);
+      ctx.rotate(player.tilt);
 
-      const shieldRadius = state.overdriveActive ? 38 : 30;
+      // Aura de Escudo
+      const shieldRadius = state.overdriveActive ? 39 : 31;
       const grad = ctx.createRadialGradient(0, 0, 10, 0, 0, shieldRadius);
-      if (state.overdriveActive) {
+      if (player.hitFlash > 0) {
+        grad.addColorStop(0, 'rgba(255, 50, 80, 0.1)');
+        grad.addColorStop(1, 'rgba(255, 50, 80, 0.75)');
+      } else if (state.overdriveActive) {
         grad.addColorStop(0, 'rgba(0, 255, 255, 0.05)');
-        grad.addColorStop(0.8, 'rgba(255, 170, 0, 0.35)');
-        grad.addColorStop(1, 'rgba(0, 255, 255, 0.85)');
+        grad.addColorStop(0.8, 'rgba(255, 170, 0, 0.38)');
+        grad.addColorStop(1, 'rgba(0, 255, 255, 0.9)');
       } else {
         grad.addColorStop(0, 'rgba(0, 210, 255, 0.02)');
         grad.addColorStop(1, 'rgba(0, 255, 255, 0.45)');
@@ -955,43 +1324,57 @@
       ctx.beginPath();
       ctx.arc(0, 0, shieldRadius, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = state.overdriveActive ? '#ffaa00' : 'rgba(0, 255, 255, 0.6)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = player.hitFlash > 0 ? '#ff3366' : (state.overdriveActive ? '#ffaa00' : 'rgba(0, 255, 255, 0.65)');
+      ctx.lineWidth = 1.6;
       ctx.stroke();
 
-      ctx.fillStyle = '#00ffff';
+      // Chamas dos propulsores duplos
+      ctx.fillStyle = state.overdriveActive ? '#ff00ff' : '#00ffff';
       ctx.shadowColor = '#00ffff';
-      ctx.shadowBlur = 14;
+      ctx.shadowBlur = 16;
+      const flameLen = (state.overdriveActive ? 32 : 24) + Math.random() * 8;
       ctx.beginPath();
-      ctx.moveTo(-8, 16);
-      ctx.lineTo(-4, 26 + Math.random() * 6);
-      ctx.lineTo(0, 16);
-      ctx.moveTo(0, 16);
-      ctx.lineTo(4, 26 + Math.random() * 6);
-      ctx.lineTo(8, 16);
+      ctx.moveTo(-9, 15);
+      ctx.lineTo(-5, flameLen);
+      ctx.lineTo(-1, 15);
+      ctx.moveTo(1, 15);
+      ctx.lineTo(5, flameLen);
+      ctx.lineTo(9, 15);
       ctx.fill();
 
-      ctx.fillStyle = '#0a192f';
+      // Asas e Fuselagem Delta Neon
+      ctx.fillStyle = '#081426';
       ctx.strokeStyle = '#00ffff';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.moveTo(0, -24);
-      ctx.lineTo(-20, 16);
-      ctx.lineTo(0, 8);
-      ctx.lineTo(20, 16);
+      ctx.moveTo(0, -26);
+      ctx.lineTo(-22, 16);
+      ctx.lineTo(-8, 11);
+      ctx.lineTo(0, 15);
+      ctx.lineTo(8, 11);
+      ctx.lineTo(22, 16);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
+      // Linhas internas e Cockpit
+      ctx.strokeStyle = '#00a8ff';
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(0, -14);
-      ctx.lineTo(-8, 10);
-      ctx.moveTo(0, -14);
-      ctx.lineTo(8, 10);
+      ctx.moveTo(0, -16);
+      ctx.lineTo(-11, 12);
+      ctx.moveTo(0, -16);
+      ctx.lineTo(11, 12);
       ctx.stroke();
+
+      ctx.fillStyle = '#00ffff';
+      ctx.beginPath();
+      ctx.ellipse(0, -3, 3, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
 
       ctx.restore();
 
+      // Partículas
       particles.forEach(pt => {
         ctx.fillStyle = pt.color;
         ctx.globalAlpha = Math.max(0, pt.life / 40);
@@ -1001,6 +1384,7 @@
       });
       ctx.globalAlpha = 1;
 
+      // Textos flutuantes
       floatingTexts.forEach(ft => {
         ctx.font = 'bold 12px Orbitron, sans-serif';
         ctx.fillStyle = ft.color;
@@ -1010,6 +1394,8 @@
         ctx.fillText(ft.text, ft.x, ft.y);
       });
       ctx.shadowBlur = 0;
+
+      ctx.restore();
     }
 
     function loop() {
