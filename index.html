@@ -3,709 +3,1295 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Jornada Espacial</title>
+  <title>Jornada Espacial — Edição Comandante de Frota</title>
   <style>
+    :root {
+      --bg-main: #070b14;
+      --bg-card: #0d1117;
+      --bg-card-alt: #121826;
+      --neon-blue: #00d2ff;
+      --neon-cyan: #00ffff;
+      --neon-purple: #7c3aed;
+      --neon-gold: #f59e0b;
+      --neon-red: #ef4444;
+      --text-main: #ffffff;
+      --text-muted: #8b9bb4;
+      --border-glow: rgba(0, 210, 255, 0.35);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
       width: 100%;
       height: 100%;
-      background-color: #070b14;
-      color: #ffffff;
+      background-color: var(--bg-main);
+      color: var(--text-main);
       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       overflow: hidden;
       touch-action: none;
     }
 
-    #gameContainer {
+    #app {
       position: relative;
       width: 100vw;
       height: 100vh;
-      background: #070b14;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top, #0f1b33 0%, #070b14 65%);
     }
 
-    canvas {
+    /* MENU PRINCIPAL */
+    #mainMenu {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px 14px 10px;
+      overflow-y: auto;
+      background: linear-gradient(180deg, rgba(7, 11, 20, 0.94) 0%, rgba(7, 11, 20, 0.98) 100%);
+    }
+
+    .header-box {
+      text-align: center;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 210, 255, 0.1);
+      border: 1px solid var(--border-glow);
+      color: var(--neon-cyan);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    .game-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #ffffff 15%, #00ffff 60%, #0088ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 24px rgba(0, 255, 255, 0.35);
+    }
+
+    .edition-sub {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* PASSE GALÁCTICO */
+    .pass-card {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(13, 17, 23, 0.95));
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .pass-info {
+      flex: 1;
+    }
+
+    .pass-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 800;
+      color: #ddd6fe;
+      margin-bottom: 5px;
+    }
+
+    .xp-bar-bg {
+      width: 100%;
+      height: 7px;
+      background: #1e1b4b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .xp-bar-fill {
+      height: 100%;
+      width: 25%;
+      background: linear-gradient(90deg, #8b5cf6, #00ffff);
+      transition: width 0.3s ease;
+    }
+
+    .btn-reward {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #070b14;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-reward:disabled {
+      background: #1f2937;
+      color: #6b7280;
+      box-shadow: none;
+    }
+
+    /* STATUS GRID */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(0, 210, 255, 0.2);
+      border-radius: 12px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.8px;
+    }
+
+    .stat-value {
+      font-size: 17px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      margin-top: 2px;
+    }
+
+    .stat-value.gold {
+      color: #fbbf24;
+    }
+
+    .stat-sub {
+      font-size: 9px;
+      color: #34d399;
+      margin-top: 1px;
+    }
+
+    /* SELETORES DE MODO E DIFICULDADE */
+    .selector-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip-btn {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 9px 6px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .chip-btn span {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 2px;
+      opacity: 0.85;
+    }
+
+    .chip-btn.active {
+      background: rgba(0, 210, 255, 0.14);
+      border-color: var(--neon-cyan);
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(0, 255, 255, 0.22);
+    }
+
+    .chip-btn.locked {
+      opacity: 0.55;
+    }
+
+    /* CARD DO ESQUADRÃO / NAVE */
+    .ship-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .ship-preview-box {
+      width: 54px;
+      height: 54px;
+      border-radius: 12px;
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.2), rgba(7, 11, 20, 0.9));
+      border: 1px solid rgba(0, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ship-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .squad-tag {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--neon-blue);
+      letter-spacing: 0.8px;
+    }
+
+    .ship-name {
+      font-size: 15px;
+      font-weight: 900;
+      color: #ffffff;
+      margin: 1px 0;
+    }
+
+    .ship-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .ship-meta strong {
+      color: var(--neon-cyan);
+    }
+
+    .btn-hangar {
+      background: rgba(0, 210, 255, 0.12);
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+    }
+
+    /* BOTÃO PRINCIPAL DECOLAR */
+    .btn-launch {
+      width: 100%;
+      margin-top: 10px;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(90deg, #00d2ff, #00ffff);
+      color: #070b14;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 22px rgba(0, 255, 255, 0.45);
+    }
+
+    .btn-launch:active {
+      transform: scale(0.98);
+    }
+
+    /* ESPAÇO BANNER ADSTERRA 320x50 */
+    .adsterra-slot {
+      width: 320px;
+      height: 50px;
+      margin: 8px auto 0;
+      background: rgba(13, 17, 23, 0.9);
+      border: 1px dashed rgba(0, 210, 255, 0.35);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* MODAL DO HANGAR */
+    #hangarModal {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: rgba(7, 11, 20, 0.97);
+      display: none;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(0, 210, 255, 0.25);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+    }
+
+    .btn-close {
+      background: #1f2937;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .hangar-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .hangar-item {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hangar-item.selected {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 14px rgba(0, 255, 255, 0.2);
+    }
+
+    /* CANVAS E HUD DO JOGO */
+    #gameCanvas {
       display: block;
       width: 100%;
       height: 100%;
     }
 
-    /* HUD Superior */
     #hud {
       position: absolute;
-      top: 12px;
-      left: 12px;
-      right: 12px;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      z-index: 5;
       display: none;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .hud-top-bar {
+      display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(13, 17, 23, 0.85);
-      border: 1px solid #00d2ff;
+      background: rgba(13, 17, 23, 0.88);
+      border: 1px solid var(--border-glow);
       border-radius: 12px;
-      padding: 10px 14px;
-      box-shadow: 0 0 15px rgba(0, 210, 255, 0.25);
-      z-index: 5;
-      font-size: 13px;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 800;
     }
 
-    .hud-item span {
-      color: #00ffff;
-      font-weight: bold;
-    }
-
-    #hpBarWrap {
-      width: 90px;
-      height: 10px;
-      background: #1a2333;
-      border-radius: 6px;
+    .hp-wrap {
+      width: 74px;
+      height: 9px;
+      background: #1e293b;
+      border-radius: 999px;
       overflow: hidden;
-      border: 1px solid #00d2ff;
       margin-top: 3px;
     }
 
-    #hpBar {
-      width: 100%;
+    .hp-fill {
       height: 100%;
+      width: 100%;
       background: linear-gradient(90deg, #00d2ff, #00ffff);
-      transition: width 0.15s ease;
+      transition: width 0.15s;
     }
 
-    /* Telas de Menu / Hangar / Fim de Jogo */
-    .overlay {
+    .hud-actions {
+      position: absolute;
+      bottom: 68px;
+      left: 14px;
+      right: 14px;
+      z-index: 6;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .skill-btn {
+      pointer-events: auto;
+      background: rgba(13, 17, 23, 0.9);
+      border: 2px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 0 16px rgba(0, 255, 255, 0.35);
+      cursor: pointer;
+    }
+
+    .skill-btn:disabled {
+      opacity: 0.45;
+      border-color: #4b5563;
+      color: #9ca3af;
+      box-shadow: none;
+    }
+
+    .pause-btn {
+      pointer-events: auto;
+      background: rgba(13, 17, 23, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* OVERLAY FIM DE MISSÃO */
+    #gameOverModal {
       position: absolute;
       inset: 0;
+      z-index: 15;
       background: rgba(7, 11, 20, 0.92);
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      z-index: 10;
       text-align: center;
     }
 
-    .title {
-      font-size: 28px;
-      font-weight: 800;
-      color: #00ffff;
-      text-shadow: 0 0 18px rgba(0, 210, 255, 0.7);
-      margin-bottom: 8px;
-      letter-spacing: 1px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: #a8c7fa;
-      margin-bottom: 20px;
-      max-width: 340px;
-    }
-
-    .hangar-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+    .over-card {
       width: 100%;
-      max-width: 380px;
-      margin-bottom: 20px;
+      max-width: 360px;
+      background: var(--bg-card);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(0, 210, 255, 0.25);
     }
 
-    .ship-card {
-      background: #0d1117;
-      border: 1px solid #1f2d42;
-      border-radius: 12px;
-      padding: 12px 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .ship-card.selected {
-      border-color: #00ffff;
-      box-shadow: 0 0 14px rgba(0, 255, 255, 0.4);
-      background: #111c2e;
-    }
-
-    .ship-name {
-      font-size: 13px;
-      font-weight: bold;
-      color: #ffffff;
-      margin-bottom: 4px;
-    }
-
-    .ship-stat {
-      font-size: 11px;
-      color: #00d2ff;
-    }
-
-    .btn-primary {
-      background: linear-gradient(90deg, #00d2ff, #00ffff);
-      color: #070b14;
-      border: none;
-      border-radius: 12px;
-      padding: 14px 32px;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
-      width: 100%;
-      max-width: 280px;
-    }
-
-    .btn-primary:active {
-      transform: scale(0.97);
-    }
-
-    #planetBanner {
-      position: absolute;
-      top: 75px;
+    .toast {
+      position: fixed;
+      top: 16px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(13, 17, 23, 0.9);
-      border: 1px solid #00ffff;
-      color: #00ffff;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: bold;
+      background: #00ffff;
+      color: #070b14;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 8px 16px;
+      border-radius: 999px;
+      z-index: 99;
       display: none;
-      z-index: 6;
-      box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
+      box-shadow: 0 4px 18px rgba(0, 255, 255, 0.5);
     }
   </style>
 </head>
 <body>
-  <div id="gameContainer">
+  <div id="app">
+    <div id="toast" class="toast"></div>
+
+    <!-- HUD EM PARTIDA -->
+    <div id="hud">
+      <div class="hud-top-bar">
+        <div>
+          <span style="color:#8b9bb4;">ESCUDO</span>
+          <div class="hp-wrap"><div id="hpFill" class="hp-fill"></div></div>
+        </div>
+        <div style="text-align:center;">
+          <div id="hudSector" style="color:#00ffff;">ÓRBITA TERRESTRE</div>
+          <div id="hudWave" style="font-size:10px; color:#8b9bb4;">ONDA 1 • ESQUADRÃO ATIVO</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="color:#8b9bb4;">PONTOS</div>
+          <div id="hudScore" style="color:#fbbf24; font-size:14px;">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hudActions" class="hud-actions">
+      <button id="btnPause" class="pause-btn">⏸ MENU</button>
+      <button id="btnSpecial" class="skill-btn">⚡ PULSO EMP (PRONTO)</button>
+    </div>
+
+    <!-- CANVAS PRINCIPAL -->
     <canvas id="gameCanvas"></canvas>
 
-    <div id="hud">
-      <div class="hud-item">
-        VIDA
-        <div id="hpBarWrap"><div id="hpBar"></div></div>
+    <!-- MENU PRINCIPAL: EDIÇÃO COMANDANTE DE FROTA -->
+    <div id="mainMenu">
+      <div>
+        <div class="header-box">
+          <div class="rank-badge">★ PILOTO EXPLORADOR</div>
+          <h1 class="game-title">JORNADA<br />ESPACIAL</h1>
+          <div class="edition-sub">EDIÇÃO COMANDANTE DE FROTA • V7.0</div>
+        </div>
+
+        <!-- PASSE GALÁCTICO -->
+        <div class="pass-card">
+          <div class="pass-info">
+            <div class="pass-top">
+              <span>✦ PASSE GALÁCTICO • NÍVEL <span id="passLevel">1</span>/10</span>
+              <span><span id="passXp">0</span> / <span id="passNextXp">250</span> XP</span>
+            </div>
+            <div class="xp-bar-bg">
+              <div id="xpFill" class="xp-bar-fill"></div>
+            </div>
+          </div>
+          <button id="btnClaimReward" class="btn-reward">🎁 <span id="rewardCount">1</span> PRÊMIO(S)</button>
+        </div>
+
+        <!-- ESTATÍSTICAS -->
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">RECORDE</div>
+            <div id="statBest" class="stat-value">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">CRISTAIS</div>
+            <div id="statCrystals" class="stat-value gold">0</div>
+            <div class="stat-sub">⛏ +<span id="miningRate">12</span>/min</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">PLANETAS</div>
+            <div class="stat-value"><span id="statPlanets">2</span>/9</div>
+          </div>
+        </div>
+
+        <!-- MODOS DE JOGO -->
+        <div class="selector-row" id="modeSelector">
+          <div class="chip-btn active" data-mode="campanha">🚀 CAMPANHA</div>
+          <div class="chip-btn" data-mode="abissal">🌀 ABISSAL</div>
+          <div class="chip-btn" data-mode="bossrush">⚔️ BOSS RUSH</div>
+        </div>
+
+        <!-- DIFICULDADE -->
+        <div class="selector-row" id="diffSelector">
+          <div class="chip-btn active" data-diff="1">🛡️ PADRÃO<span>(1.0x)</span></div>
+          <div class="chip-btn" data-diff="1.5">⚔️ VETERANO<span>(1.5x)</span></div>
+          <div class="chip-btn" data-diff="2.5">💀 PESADELO<span>(2.5x)</span></div>
+        </div>
+
+        <!-- ESQUADRÃO ATIVO / NAVE -->
+        <div class="ship-card">
+          <div class="ship-preview-box">
+            <svg width="34" height="34" viewBox="0 0 40 40">
+              <polygon id="menuShipPoly" points="20,4 35,34 20,27 5,34" fill="none" stroke="#00ffff" stroke-width="2.5" />
+              <circle cx="20" cy="20" r="3" fill="#00d2ff" />
+            </svg>
+          </div>
+          <div class="ship-details">
+            <div class="squad-tag">ESQUADRÃO ATIVO</div>
+            <div id="activeShipName" class="ship-name">VALKYRIE MK-I</div>
+            <div class="ship-meta">
+              Poder: <strong id="activeShipPower">⚡ Pulso EMP</strong><br />
+              Pintura: <strong id="activeShipPaint">Ciano Quântico</strong>
+            </div>
+          </div>
+          <button id="btnOpenHangar" class="btn-hangar">HANGAR</button>
+        </div>
+
+        <!-- BOTÃO DECOLAR -->
+        <button id="btnLaunch" class="btn-launch">DECOLAR AGORA</button>
       </div>
-      <div class="hud-item">SETOR: <span id="planetName">Órbita Terrestre</span></div>
-      <div class="hud-item">PONTOS: <span id="scoreVal">0</span></div>
+
+      <!-- ESPAÇO BANNER ADSTERRA 320x50 -->
+      <div id="adsterra-banner-container" class="adsterra-slot">
+        <!-- Cole aqui o script do banner 320x50 da Adsterra -->
+        ESPAÇO BANNER ADSTERRA 320x50
+      </div>
     </div>
 
-    <div id="planetBanner"></div>
-
-    <!-- Menu & Hangar -->
-    <div id="startOverlay" class="overlay">
-      <div class="title">JORNADA ESPACIAL</div>
-      <div class="subtitle">Escolha sua nave no hangar e explore os setores planetários. Arraste o dedo na tela para pilotar e atirar.</div>
-
-      <div class="hangar-grid">
-        <div class="ship-card selected" data-ship="0" onclick="selectShip(0)">
-          <div class="ship-name">FALCON V1</div>
-          <div class="ship-stat">Equilibrada<br>Tiro Duplo</div>
-        </div>
-        <div class="ship-card" data-ship="1" onclick="selectShip(1)">
-          <div class="ship-name">INTERCEPTOR</div>
-          <div class="ship-stat">Alta Vel.<br>Cadência +</div>
-        </div>
-        <div class="ship-card" data-ship="2" onclick="selectShip(2)">
-          <div class="ship-name">TITAN X</div>
-          <div class="ship-stat">Blindada<br>Canhão Plasma</div>
-        </div>
+    <!-- MODAL HANGAR -->
+    <div id="hangarModal">
+      <div class="modal-header">
+        <div class="modal-title">🛸 HANGAR DA FROTA</div>
+        <button id="btnCloseHangar" class="btn-close">FECHAR</button>
       </div>
-
-      <button class="btn-primary" onclick="startGame()">INICIAR MISSÃO</button>
+      <div style="font-size:12px; color:#8b9bb4; margin-top:8px;">
+        Cristais disponíveis: <strong id="hangarCrystals" style="color:#fbbf24;">0</strong>
+      </div>
+      <div id="hangarList" class="hangar-list"></div>
     </div>
 
-    <!-- Tela de Game Over -->
-    <div id="gameOverOverlay" class="overlay" style="display: none;">
-      <div class="title" id="endTitle">NAVE DESTRUÍDA</div>
-      <div class="subtitle" id="endSummary">Pontuação final: 0</div>
-      <button class="btn-primary" onclick="resetToMenu()">VOLTAR AO HANGAR</button>
+    <!-- MODAL FIM DE MISSÃO -->
+    <div id="gameOverModal">
+      <div class="over-card">
+        <div style="font-size:12px; color:#00ffff; font-weight:800; letter-spacing:1.5px;">RELATÓRIO DE MISSÃO</div>
+        <h2 id="overTitle" style="font-size:24px; font-weight:900; margin:6px 0 12px;">NAVE DANIFICADA</h2>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+          <div class="stat-box">
+            <div class="stat-label">PONTUAÇÃO</div>
+            <div id="finalScore" class="stat-value">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">CRISTAIS GANHOS</div>
+            <div id="finalCrystals" class="stat-value gold">+0</div>
+          </div>
+        </div>
+        <button id="btnRetry" class="btn-launch" style="margin-top:0;">DECOLAR NOVAMENTE</button>
+        <button id="btnBackMenu" class="btn-hangar" style="width:100%; margin-top:10px; padding:12px;">VOLTAR AO COMANDO</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    const hud = document.getElementById('hud');
-    const hpBar = document.getElementById('hpBar');
-    const scoreVal = document.getElementById('scoreVal');
-    const planetNameEl = document.getElementById('planetName');
-    const planetBanner = document.getElementById('planetBanner');
-    const startOverlay = document.getElementById('startOverlay');
-    const gameOverOverlay = document.getElementById('gameOverOverlay');
-    const endSummary = document.getElementById('endSummary');
-
+    // DADOS DAS NAVES DO HANGAR
     const SHIPS = [
-      { name: 'FALCON V1', maxHp: 100, fireRate: 240, speed: 1.0, color: '#00ffff', bulletColor: '#00d2ff', power: 18 },
-      { name: 'INTERCEPTOR', maxHp: 80, fireRate: 150, speed: 1.25, color: '#38bdf8', bulletColor: '#7dd3fc', power: 14 },
-      { name: 'TITAN X', maxHp: 150, fireRate: 340, speed: 0.85, color: '#00d2ff', bulletColor: '#00ffff', power: 32 }
+      {
+        id: 'valkyrie',
+        name: 'VALKYRIE MK-I',
+        power: '⚡ Pulso EMP',
+        paint: 'Ciano Quântico',
+        color: '#00ffff',
+        fireRate: 14,
+        speed: 1,
+        hp: 100,
+        cost: 0
+      },
+      {
+        id: 'interceptor',
+        name: 'INTERCEPTOR X-9',
+        power: '🔥 Rajada Dupla',
+        paint: 'Azul Estelar',
+        color: '#38bdf8',
+        fireRate: 10,
+        speed: 1.2,
+        hp: 110,
+        cost: 150
+      },
+      {
+        id: 'titan',
+        name: 'TITAN VANGUARDA',
+        power: '🛡️ Escudo Pesado',
+        paint: 'Neon Solar',
+        color: '#fbbf24',
+        fireRate: 16,
+        speed: 0.95,
+        hp: 160,
+        cost: 350
+      }
     ];
 
     const PLANETS = [
-      { name: 'Órbita Terrestre', threshold: 0, color: '#1d4ed8' },
-      { name: 'Cinturão de Marte', threshold: 250, color: '#dc2626' },
-      { name: 'Tempestade de Júpiter', threshold: 600, color: '#d97706' },
-      { name: 'Anéis de Saturno', threshold: 1100, color: '#eab308' },
-      { name: 'Abismo de Netuno', threshold: 1800, color: '#0284c7' }
+      'Órbita Terrestre',
+      'Base Lunar',
+      'Cinturão de Marte',
+      'Tempestade de Júpiter',
+      'Anéis de Saturno',
+      'Abismo de Urano',
+      'Fronteira de Netuno',
+      'Núcleo de Plutão',
+      'Singularidade Ômega'
     ];
 
-    let selectedShipIndex = 0;
-    let gameRunning = false;
-    let animationId = null;
-    let lastTime = 0;
-    let lastShot = 0;
-    let spawnTimer = 0;
-
-    let score = 0;
-    let currentPlanetIdx = 0;
-    let stars = [];
-    let bullets = [];
-    let enemies = [];
-    let particles = [];
-    let powerups = [];
-    let boss = null;
-    let nextBossScore = 500;
-
-    const player = {
-      x: 0,
-      y: 0,
-      targetX: 0,
-      targetY: 0,
-      radius: 20,
-      hp: 100,
-      maxHp: 100,
-      weaponLevel: 1
+    // ESTADO SALVO NO NAVEGADOR
+    const defaultState = {
+      bestScore: 0,
+      crystals: 100,
+      planetsUnlocked: 2,
+      passLevel: 1,
+      passXp: 0,
+      pendingRewards: 1,
+      unlockedShips: ['valkyrie'],
+      selectedShip: 'valkyrie',
+      mode: 'campanha',
+      diff: 1,
+      lastMineTime: Date.now()
     };
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      if (!gameRunning) {
-        player.x = canvas.width / 2;
-        player.y = canvas.height * 0.78;
-        player.targetX = player.x;
-        player.targetY = player.y;
+    let state = Object.assign({}, defaultState, JSON.parse(localStorage.getItem('jornada_espacial_v7') || '{}'));
+
+    function saveState() {
+      localStorage.setItem('jornada_espacial_v7', JSON.stringify(state));
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.style.display = 'none'; }, 2200);
+    }
+
+    // MINERAÇÃO PASSIVA DE CRISTAIS
+    function collectPassiveMining() {
+      const now = Date.now();
+      const mins = Math.floor((now - state.lastMineTime) / 60000);
+      if (mins > 0) {
+        const earned = Math.min(mins * 12, 240);
+        state.crystals += earned;
+        state.lastMineTime = now;
+        saveState();
+        showToast(`⛏️ Mineração orbital: +${earned} Cristais!`);
       }
     }
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    function initStars() {
-      stars = [];
-      for (let i = 0; i < 75; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 2 + 0.6,
-          speed: Math.random() * 1.8 + 0.5
-        });
-      }
+    function getActiveShip() {
+      return SHIPS.find(s => s.id === state.selectedShip) || SHIPS[0];
     }
 
-    function selectShip(index) {
-      selectedShipIndex = index;
-      document.querySelectorAll('.ship-card').forEach((card, idx) => {
-        card.classList.toggle('selected', idx === index);
+    function updateMenuUI() {
+      const ship = getActiveShip();
+      document.getElementById('statBest').textContent = state.bestScore;
+      document.getElementById('statCrystals').textContent = state.crystals;
+      document.getElementById('statPlanets').textContent = state.planetsUnlocked;
+      document.getElementById('passLevel').textContent = state.passLevel;
+      const nextXp = state.passLevel * 250;
+      document.getElementById('passXp').textContent = state.passXp;
+      document.getElementById('passNextXp').textContent = nextXp;
+      document.getElementById('xpFill').style.width = Math.min(100, (state.passXp / nextXp) * 100) + '%';
+
+      const btnReward = document.getElementById('btnClaimReward');
+      document.getElementById('rewardCount').textContent = state.pendingRewards;
+      btnReward.disabled = state.pendingRewards <= 0;
+
+      document.getElementById('activeShipName').textContent = ship.name;
+      document.getElementById('activeShipPower').textContent = ship.power;
+      document.getElementById('activeShipPaint').textContent = ship.paint;
+      document.getElementById('menuShipPoly').setAttribute('stroke', ship.color);
+
+      document.querySelectorAll('#modeSelector .chip-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === state.mode);
+      });
+      document.querySelectorAll('#diffSelector .chip-btn').forEach(btn => {
+        btn.classList.toggle('active', parseFloat(btn.dataset.diff) === state.diff);
       });
     }
 
-    function showBanner(text) {
-      planetBanner.textContent = text;
-      planetBanner.style.display = 'block';
-      clearTimeout(planetBanner._timer);
-      planetBanner._timer = setTimeout(() => {
-        planetBanner.style.display = 'none';
-      }, 2600);
-    }
+    // EVENTOS DO MENU
+    document.querySelectorAll('#modeSelector .chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.mode = btn.dataset.mode;
+        saveState();
+        updateMenuUI();
+      });
+    });
 
-    function startGame() {
-      resizeCanvas();
-      const spec = SHIPS[selectedShipIndex];
-      player.maxHp = spec.maxHp;
-      player.hp = spec.maxHp;
-      player.x = canvas.width / 2;
-      player.y = canvas.height * 0.78;
-      player.targetX = player.x;
-      player.targetY = player.y;
-      player.weaponLevel = 1;
+    document.querySelectorAll('#diffSelector .chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.diff = parseFloat(btn.dataset.diff);
+        saveState();
+        updateMenuUI();
+      });
+    });
 
-      score = 0;
-      currentPlanetIdx = 0;
-      nextBossScore = 500;
-      bullets = [];
-      enemies = [];
-      particles = [];
-      powerups = [];
-      boss = null;
-
-      initStars();
-      updateHud();
-
-      startOverlay.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      hud.style.display = 'flex';
-      showBanner('SETOR: ' + PLANETS[0].name.toUpperCase());
-
-      gameRunning = true;
-      lastTime = performance.now();
-      cancelAnimationFrame(animationId);
-      animationId = requestAnimationFrame(gameLoop);
-    }
-
-    function resetToMenu() {
-      gameRunning = false;
-      cancelAnimationFrame(animationId);
-      hud.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      startOverlay.style.display = 'flex';
-    }
-
-    function endGame() {
-      gameRunning = false;
-      cancelAnimationFrame(animationId);
-      hud.style.display = 'none';
-      endSummary.textContent = `Setor alcançado: ${PLANETS[currentPlanetIdx].name} • Pontuação: ${score}`;
-      gameOverOverlay.style.display = 'flex';
-    }
-
-    function updateHud() {
-      const pct = Math.max(0, (player.hp / player.maxHp) * 100);
-      hpBar.style.width = pct + '%';
-      scoreVal.textContent = score;
-      planetNameEl.textContent = PLANETS[currentPlanetIdx].name;
-    }
-
-    // Controles Touch e Mouse
-    function handlePointer(clientX, clientY) {
-      if (!gameRunning) return;
-      player.targetX = Math.max(24, Math.min(canvas.width - 24, clientX));
-      player.targetY = Math.max(70, Math.min(canvas.height - 30, clientY - 35));
-    }
-
-    canvas.addEventListener('touchstart', (e) => {
-      if (e.touches.length > 0) {
-        handlePointer(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    }, { passive: true });
-
-    canvas.addEventListener('touchmove', (e) => {
-      if (e.touches.length > 0) {
-        handlePointer(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    }, { passive: true });
-
-    canvas.addEventListener('mousemove', (e) => {
-      if (e.buttons === 1) {
-        handlePointer(e.clientX, e.clientY);
+    document.getElementById('btnClaimReward').addEventListener('click', () => {
+      if (state.pendingRewards > 0) {
+        state.pendingRewards--;
+        state.crystals += 75;
+        saveState();
+        updateMenuUI();
+        showToast('🎁 Prêmio resgatado: +75 Cristais!');
       }
     });
 
-    function spawnBullets(now) {
-      const spec = SHIPS[selectedShipIndex];
-      if (now - lastShot < spec.fireRate) return;
-      lastShot = now;
-
-      if (player.weaponLevel === 1) {
-        bullets.push({ x: player.x, y: player.y - 22, vx: 0, vy: -9, power: spec.power, color: spec.bulletColor });
-      } else if (player.weaponLevel === 2) {
-        bullets.push({ x: player.x - 10, y: player.y - 18, vx: 0, vy: -9.5, power: spec.power, color: spec.bulletColor });
-        bullets.push({ x: player.x + 10, y: player.y - 18, vx: 0, vy: -9.5, power: spec.power, color: spec.bulletColor });
-      } else {
-        bullets.push({ x: player.x, y: player.y - 24, vx: 0, vy: -10, power: spec.power, color: '#00ffff' });
-        bullets.push({ x: player.x - 14, y: player.y - 14, vx: -1.3, vy: -9.5, power: spec.power * 0.8, color: spec.bulletColor });
-        bullets.push({ x: player.x + 14, y: player.y - 14, vx: 1.3, vy: -9.5, power: spec.power * 0.8, color: spec.bulletColor });
-      }
-    }
-
-    function spawnEnemy() {
-      const radius = Math.random() * 10 + 16;
-      const hp = 25 + currentPlanetIdx * 15;
-      enemies.push({
-        x: Math.random() * (canvas.width - 50) + 25,
-        y: -30,
-        radius,
-        hp,
-        maxHp: hp,
-        vy: Math.random() * 1.6 + 1.8 + currentPlanetIdx * 0.3,
-        vx: (Math.random() - 0.5) * 1.4
+    // HANGAR
+    function renderHangar() {
+      document.getElementById('hangarCrystals').textContent = state.crystals;
+      const list = document.getElementById('hangarList');
+      list.innerHTML = '';
+      SHIPS.forEach(ship => {
+        const unlocked = state.unlockedShips.includes(ship.id);
+        const selected = state.selectedShip === ship.id;
+        const item = document.createElement('div');
+        item.className = 'hangar-item' + (selected ? ' selected' : '');
+        item.innerHTML = `
+          <div>
+            <div style="font-size:14px; font-weight:900; color:${ship.color};">${ship.name}</div>
+            <div style="font-size:11px; color:#8b9bb4; margin-top:2px;">${ship.power} • Escudo ${ship.hp}</div>
+            <div style="font-size:10px; color:#00ffff; margin-top:2px;">Pintura: ${ship.paint}</div>
+          </div>
+          <button class="btn-hangar" style="min-width:96px;">
+            ${selected ? 'EQUIPADA' : unlocked ? 'EQUIPAR' : '💎 ' + ship.cost}
+          </button>
+        `;
+        item.querySelector('button').addEventListener('click', () => {
+          if (selected) return;
+          if (unlocked) {
+            state.selectedShip = ship.id;
+            saveState();
+            updateMenuUI();
+            renderHangar();
+            showToast(`${ship.name} equipada!`);
+          } else if (state.crystals >= ship.cost) {
+            state.crystals -= ship.cost;
+            state.unlockedShips.push(ship.id);
+            state.selectedShip = ship.id;
+            saveState();
+            updateMenuUI();
+            renderHangar();
+            showToast(`🚀 ${ship.name} desbloqueada!`);
+          } else {
+            showToast('Cristais insuficientes!');
+          }
+        });
+        list.appendChild(item);
       });
     }
 
-    function spawnBoss() {
-      const maxHp = 350 + currentPlanetIdx * 180;
-      boss = {
-        x: canvas.width / 2,
-        y: 125,
-        radius: 46,
-        hp: maxHp,
-        maxHp,
-        vx: 2.2,
-        shootTimer: 0
-      };
-      showBanner('ALERTA: NAVE-MÃE DETECTADA!');
+    document.getElementById('btnOpenHangar').addEventListener('click', () => {
+      renderHangar();
+      document.getElementById('hangarModal').style.display = 'flex';
+    });
+
+    document.getElementById('btnCloseHangar').addEventListener('click', () => {
+      document.getElementById('hangarModal').style.display = 'none';
+    });
+
+    // MOTOR DO JOGO (CANVAS ARCADE)
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0;
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    let gameRunning = false;
+    let frame = 0;
+    let score = 0;
+    let earnedCrystals = 0;
+    let empCooldown = 0;
+    let empWaveRadius = 0;
+
+    const stars = Array.from({ length: 65 }, () => ({
+      x: Math.random() * 500,
+      y: Math.random() * 900,
+      size: Math.random() * 1.8 + 0.5,
+      speed: Math.random() * 2 + 0.8
+    }));
+
+    const player = { x: 0, y: 0, targetX: 0, targetY: 0, hp: 100, maxHp: 100, radius: 18 };
+    let bullets = [];
+    let enemies = [];
+    let particles = [];
+    let boss = null;
+
+    function startGame() {
+      const ship = getActiveShip();
+      document.getElementById('mainMenu').style.display = 'none';
+      document.getElementById('gameOverModal').style.display = 'none';
+      document.getElementById('hud').style.display = 'flex';
+      document.getElementById('hudActions').style.display = 'flex';
+
+      player.x = player.targetX = W / 2;
+      player.y = player.targetY = H * 0.78;
+      player.maxHp = ship.hp;
+      player.hp = ship.hp;
+
+      bullets = [];
+      enemies = [];
+      particles = [];
+      boss = null;
+      score = 0;
+      earnedCrystals = 0;
+      frame = 0;
+      empCooldown = 0;
+      empWaveRadius = 0;
+
+      if (state.mode === 'bossrush') {
+        spawnBoss();
+      }
+
+      gameRunning = true;
+      updateHUD();
+      requestAnimationFrame(loop);
     }
 
-    function createExplosion(x, y, color, count = 14) {
+    function spawnBoss() {
+      const level = Math.floor(score / 500) + 1;
+      boss = {
+        x: W / 2,
+        y: 120,
+        vx: 2.2 * state.diff,
+        hp: 250 * level * state.diff,
+        maxHp: 250 * level * state.diff,
+        radius: 44
+      };
+    }
+
+    function triggerEMP() {
+      if (empCooldown > 0 || !gameRunning) return;
+      empCooldown = 480;
+      empWaveRadius = 10;
+      if (navigator.vibrate) navigator.vibrate([40, 30, 60]);
+
+      enemies.forEach(e => {
+        createExplosion(e.x, e.y, '#00ffff', 12);
+        score += 25;
+        earnedCrystals += 2;
+      });
+      enemies = [];
+
+      if (boss) {
+        boss.hp -= 120;
+        createExplosion(boss.x, boss.y, '#00ffff', 20);
+      }
+    }
+
+    document.getElementById('btnSpecial').addEventListener('click', triggerEMP);
+
+    document.getElementById('btnPause').addEventListener('click', () => {
+      gameRunning = false;
+      document.getElementById('hud').style.display = 'none';
+      document.getElementById('hudActions').style.display = 'none';
+      document.getElementById('mainMenu').style.display = 'flex';
+      updateMenuUI();
+    });
+
+    // CONTROLES TOUCH E MOUSE
+    function setPointer(clientX, clientY) {
+      if (!gameRunning) return;
+      player.targetX = Math.max(24, Math.min(W - 24, clientX));
+      player.targetY = Math.max(90, Math.min(H - 80, clientY - 35));
+    }
+
+    canvas.addEventListener('touchstart', e => {
+      setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', e => {
+      setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    canvas.addEventListener('mousemove', e => {
+      if (e.buttons === 1) setPointer(e.clientX, e.clientY);
+    });
+
+    function createExplosion(x, y, color, count) {
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 3.5 + 1;
+        const spd = Math.random() * 4 + 1;
         particles.push({
-          x,
-          y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          life: 1,
+          x, y,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd,
+          life: 24,
           color
         });
       }
     }
 
-    function checkPlanetProgress() {
-      for (let i = PLANETS.length - 1; i >= 0; i--) {
-        if (score >= PLANETS[i].threshold && currentPlanetIdx < i) {
-          currentPlanetIdx = i;
-          showBanner('NOVO SETOR: ' + PLANETS[i].name.toUpperCase());
-          break;
-        }
-      }
-      if (!boss && score >= nextBossScore) {
-        spawnBoss();
+    function updateHUD() {
+      const planetIdx = Math.min(PLANETS.length - 1, Math.floor(score / 300));
+      document.getElementById('hudSector').textContent = PLANETS[planetIdx].toUpperCase();
+      document.getElementById('hudWave').textContent =
+        state.mode === 'bossrush' ? 'MODO BOSS RUSH • ALERTA MÁXIMO' : `ONDA ${planetIdx + 1} • ESQUADRÃO ATIVO`;
+      document.getElementById('hudScore').textContent = score;
+      document.getElementById('hpFill').style.width = Math.max(0, (player.hp / player.maxHp) * 100) + '%';
+
+      const btnEmp = document.getElementById('btnSpecial');
+      if (empCooldown > 0) {
+        btnEmp.disabled = true;
+        btnEmp.textContent = `⚡ RECARGA (${Math.ceil(empCooldown / 60)}s)`;
+      } else {
+        btnEmp.disabled = false;
+        btnEmp.textContent = '⚡ PULSO EMP (PRONTO)';
       }
     }
 
-    function drawShip() {
-      const spec = SHIPS[selectedShipIndex];
-      ctx.save();
-      ctx.translate(player.x, player.y);
+    function endGame() {
+      gameRunning = false;
+      if (navigator.vibrate) navigator.vibrate(180);
 
-      // Propulsor
-      ctx.fillStyle = '#00ffff';
-      ctx.beginPath();
-      ctx.moveTo(-7, 16);
-      ctx.lineTo(0, 26 + Math.random() * 8);
-      ctx.lineTo(7, 16);
-      ctx.closePath();
-      ctx.fill();
+      const finalBonus = Math.floor(score / 20) + earnedCrystals;
+      state.crystals += finalBonus;
+      if (score > state.bestScore) state.bestScore = score;
 
-      // Fuselagem
-      ctx.fillStyle = '#0d1117';
-      ctx.strokeStyle = spec.color;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(0, -24);
-      ctx.lineTo(20, 16);
-      ctx.lineTo(0, 10);
-      ctx.lineTo(-20, 16);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      const unlockedNow = Math.min(9, Math.max(state.planetsUnlocked, Math.floor(score / 300) + 2));
+      state.planetsUnlocked = unlockedNow;
 
-      // Cabine
-      ctx.fillStyle = '#00ffff';
-      ctx.beginPath();
-      ctx.arc(0, -3, 4.5, 0, Math.PI * 2);
-      ctx.fill();
+      state.passXp += Math.floor(score / 5) + 30;
+      const needed = state.passLevel * 250;
+      if (state.passXp >= needed && state.passLevel < 10) {
+        state.passXp -= needed;
+        state.passLevel++;
+        state.pendingRewards++;
+      }
 
-      ctx.restore();
+      saveState();
+
+      document.getElementById('hud').style.display = 'none';
+      document.getElementById('hudActions').style.display = 'none';
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('finalCrystals').textContent = '+' + finalBonus;
+      document.getElementById('gameOverModal').style.display = 'flex';
     }
 
-    function gameLoop(now) {
+    function loop() {
       if (!gameRunning) return;
-      const dt = now - lastTime;
-      lastTime = now;
+      frame++;
 
       ctx.fillStyle = '#070b14';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, W, H);
 
-      // Fundo estrelado
-      for (const s of stars) {
-        s.y += s.speed;
-        if (s.y > canvas.height) {
-          s.y = 0;
-          s.x = Math.random() * canvas.width;
+      // ESTRELAS
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      stars.forEach(s => {
+        s.y += s.speed * (state.mode === 'abissal' ? 1.8 : 1);
+        if (s.y > H) { s.y = 0; s.x = Math.random() * W; }
+        ctx.fillRect(s.x % W, s.y, s.size, s.size);
+      });
+
+      // MOVIMENTO SUAVE DA NAVE
+      const ship = getActiveShip();
+      player.x += (player.targetX - player.x) * 0.22;
+      player.y += (player.targetY - player.y) * 0.22;
+
+      // DISPAROS AUTOMÁTICOS + DRONES DO ESQUADRÃO
+      if (frame % ship.fireRate === 0) {
+        bullets.push({ x: player.x, y: player.y - 20, vy: -11, color: ship.color });
+        if (ship.id === 'interceptor') {
+          bullets.push({ x: player.x - 12, y: player.y - 10, vy: -11, color: ship.color });
+          bullets.push({ x: player.x + 12, y: player.y - 10, vy: -11, color: ship.color });
+        } else {
+          // Drones aliados laterais
+          bullets.push({ x: player.x - 26, y: player.y, vy: -10, color: '#00d2ff' });
+          bullets.push({ x: player.x + 26, y: player.y, vy: -10, color: '#00d2ff' });
         }
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-        ctx.fillRect(s.x, s.y, s.size, s.size);
       }
 
-      // Movimento suave do jogador
-      const spec = SHIPS[selectedShipIndex];
-      player.x += (player.targetX - player.x) * 0.22 * spec.speed;
-      player.y += (player.targetY - player.y) * 0.22 * spec.speed;
+      // ONDA EMP VISUAL
+      if (empWaveRadius > 0) {
+        empWaveRadius += 22;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, empWaveRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.7)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        if (empWaveRadius > Math.max(W, H)) empWaveRadius = 0;
+      }
 
-      spawnBullets(now);
-      drawShip();
+      if (empCooldown > 0) empCooldown--;
 
-      // Tiros do jogador
+      // DESENHAR NAVE E DRONES DO ESQUADRÃO
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.strokeStyle = ship.color;
+      ctx.lineWidth = 2.5;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = ship.color;
+      ctx.beginPath();
+      ctx.moveTo(0, -20);
+      ctx.lineTo(16, 15);
+      ctx.lineTo(0, 8);
+      ctx.lineTo(-16, 15);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Drones aliados
+      [-26, 26].forEach(dx => {
+        ctx.beginPath();
+        ctx.arc(dx, 4, 4, 0, Math.PI * 2);
+        ctx.strokeStyle = '#00d2ff';
+        ctx.stroke();
+      });
+      ctx.restore();
+
+      // PROJÉTEIS
       for (let i = bullets.length - 1; i >= 0; i--) {
         const b = bullets[i];
-        b.x += b.vx;
         b.y += b.vy;
         ctx.fillStyle = b.color;
         ctx.fillRect(b.x - 2, b.y - 8, 4, 14);
-        if (b.y < -20 || b.y > canvas.height + 20) {
-          bullets.splice(i, 1);
-        }
+        if (b.y < -20) bullets.splice(i, 1);
       }
 
-      // Spawn de inimigos comuns
-      spawnTimer += dt;
-      if (!boss && spawnTimer > Math.max(480, 1100 - currentPlanetIdx * 120)) {
-        spawnEnemy();
-        spawnTimer = 0;
+      // SPAWN INIMIGOS
+      const spawnInterval = Math.max(18, Math.floor(46 / state.diff));
+      if (state.mode !== 'bossrush' && frame % spawnInterval === 0) {
+        const isHunter = Math.random() < 0.3;
+        enemies.push({
+          x: Math.random() * (W - 50) + 25,
+          y: -25,
+          vy: (2.6 + Math.random() * 1.8) * state.diff,
+          vx: isHunter ? (Math.random() - 0.5) * 3 : 0,
+          radius: isHunter ? 18 : 14,
+          hp: isHunter ? 2 : 1,
+          color: isHunter ? '#f59e0b' : '#ef4444'
+        });
       }
 
-      // Atualizar inimigos
+      // ATUALIZAR INIMIGOS
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
-        e.x += e.vx;
         e.y += e.vy;
-        if (e.x < e.radius || e.x > canvas.width - e.radius) e.vx *= -1;
+        e.x += e.vx;
+        if (e.x < 20 || e.x > W - 20) e.vx *= -1;
 
-        ctx.fillStyle = '#161b22';
-        ctx.strokeStyle = '#ff4d6d';
-        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.strokeStyle = e.color;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // Colisão tiro x inimigo
+        // Colisão com projéteis
+        let destroyed = false;
         for (let j = bullets.length - 1; j >= 0; j--) {
           const b = bullets[j];
-          if (b.vy < 0 && Math.hypot(b.x - e.x, b.y - e.y) < e.radius + 5) {
-            e.hp -= b.power;
+          if (Math.hypot(b.x - e.x, b.y - e.y) < e.radius + 6) {
             bullets.splice(j, 1);
+            e.hp--;
             if (e.hp <= 0) {
-              createExplosion(e.x, e.y, '#ff4d6d');
-              score += 25;
-              if (Math.random() < 0.16) {
-                powerups.push({ x: e.x, y: e.y, type: Math.random() < 0.5 ? 'weapon' : 'heal' });
-              }
+              createExplosion(e.x, e.y, e.color, 10);
+              score += Math.round(25 * state.diff);
+              earnedCrystals += 1;
               enemies.splice(i, 1);
-              checkPlanetProgress();
-              updateHud();
+              destroyed = true;
+              if (score > 0 && score % 600 === 0 && !boss) spawnBoss();
             }
             break;
           }
         }
+        if (destroyed) continue;
 
-        // Colisão nave x inimigo
-        if (enemies[i] && Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.radius) {
-          createExplosion(e.x, e.y, '#ff4d6d');
+        // Colisão com jogador
+        if (Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.radius) {
+          createExplosion(e.x, e.y, '#ef4444', 14);
           enemies.splice(i, 1);
-          player.hp -= 20;
-          updateHud();
-          if (player.hp <= 0) return endGame();
-        } else if (enemies[i] && e.y > canvas.height + 40) {
-          enemies.splice(i, 1);
+          player.hp -= 25;
+          if (player.hp <= 0) {
+            updateHUD();
+            endGame();
+            return;
+          }
+          continue;
         }
+
+        if (e.y > H + 30) enemies.splice(i, 1);
       }
 
-      // Lógica do Chefão (Boss)
+      // CHEFE (BOSS)
       if (boss) {
         boss.x += boss.vx;
-        if (boss.x < boss.radius + 16 || boss.x > canvas.width - boss.radius - 16) {
-          boss.vx *= -1;
-        }
+        if (boss.x < 55 || boss.x > W - 55) boss.vx *= -1;
 
-        boss.shootTimer += dt;
-        if (boss.shootTimer > 950) {
-          boss.shootTimer = 0;
-          bullets.push({ x: boss.x, y: boss.y + boss.radius, vx: 0, vy: 5.2, power: 18, color: '#ff4d6d' });
-          bullets.push({ x: boss.x - 18, y: boss.y + 30, vx: -1.4, vy: 4.8, power: 18, color: '#ff4d6d' });
-          bullets.push({ x: boss.x + 18, y: boss.y + 30, vx: 1.4, vy: 4.8, power: 18, color: '#ff4d6d' });
-        }
-
-        ctx.fillStyle = '#0d1117';
-        ctx.strokeStyle = '#ff0055';
-        ctx.lineWidth = 3;
+        ctx.save();
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 3.5;
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = '#a855f7';
         ctx.beginPath();
         ctx.arc(boss.x, boss.y, boss.radius, 0, Math.PI * 2);
-        ctx.fill();
         ctx.stroke();
+        ctx.restore();
 
         // Barra de vida do Boss
-        const bw = 90;
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(boss.x - bw / 2, boss.y - boss.radius - 14, bw, 7);
-        ctx.fillStyle = '#ff0055';
-        ctx.fillRect(boss.x - bw / 2, boss.y - boss.radius - 14, bw * (boss.hp / boss.maxHp), 7);
+        ctx.fillStyle = '#1e1b4b';
+        ctx.fillRect(boss.x - 40, boss.y - 58, 80, 6);
+        ctx.fillStyle = '#c084fc';
+        ctx.fillRect(boss.x - 40, boss.y - 58, 80 * Math.max(0, boss.hp / boss.maxHp), 6);
+
+        // Ataque do Boss
+        if (frame % Math.max(28, Math.floor(55 / state.diff)) === 0) {
+          enemies.push({
+            x: boss.x,
+            y: boss.y + 30,
+            vy: 4.2 * state.diff,
+            vx: (player.x - boss.x) * 0.012,
+            radius: 10,
+            hp: 1,
+            color: '#c084fc'
+          });
+        }
 
         for (let j = bullets.length - 1; j >= 0; j--) {
           const b = bullets[j];
-          if (b.vy < 0 && Math.hypot(b.x - boss.x, b.y - boss.y) < boss.radius + 6) {
-            boss.hp -= b.power;
+          if (Math.hypot(b.x - boss.x, b.y - boss.y) < boss.radius + 6) {
             bullets.splice(j, 1);
+            boss.hp -= 10;
             if (boss.hp <= 0) {
-              createExplosion(boss.x, boss.y, '#00ffff', 32);
-              score += 200;
-              nextBossScore = score + 650;
+              createExplosion(boss.x, boss.y, '#c084fc', 32);
+              score += Math.round(300 * state.diff);
+              earnedCrystals += 25;
               boss = null;
-              checkPlanetProgress();
-              updateHud();
+              if (state.mode === 'bossrush') spawnBoss();
               break;
             }
           }
         }
       }
 
-      // Tiros inimigos atingindo o jogador
-      for (let j = bullets.length - 1; j >= 0; j--) {
-        const b = bullets[j];
-        if (b.vy > 0 && Math.hypot(b.x - player.x, b.y - player.y) < player.radius) {
-          bullets.splice(j, 1);
-          player.hp -= b.power;
-          updateHud();
-          if (player.hp <= 0) return endGame();
-        }
-      }
-
-      // Power-ups
-      for (let i = powerups.length - 1; i >= 0; i--) {
-        const p = powerups[i];
-        p.y += 2.2;
-        ctx.fillStyle = p.type === 'weapon' ? '#00ffff' : '#22c55e';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 11, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (Math.hypot(p.x - player.x, p.y - player.y) < player.radius + 12) {
-          if (p.type === 'weapon') {
-            player.weaponLevel = Math.min(3, player.weaponLevel + 1);
-            showBanner('ARMA APRIMORADA!');
-          } else {
-            player.hp = Math.min(player.maxHp, player.hp + 30);
-            showBanner('ESCUDO REPARADO!');
-            updateHud();
-          }
-          powerups.splice(i, 1);
-        } else if (p.y > canvas.height + 20) {
-          powerups.splice(i, 1);
-        }
-      }
-
-      // Partículas
+      // PARTÍCULAS
       for (let i = particles.length - 1; i >= 0; i--) {
-        const pt = particles[i];
-        pt.x += pt.vx;
-        pt.y += pt.vy;
-        pt.life -= 0.035;
-        if (pt.life <= 0) {
-          particles.splice(i, 1);
-          continue;
-        }
-        ctx.globalAlpha = pt.life;
-        ctx.fillStyle = pt.color;
-        ctx.fillRect(pt.x, pt.y, 3, 3);
-        ctx.globalAlpha = 1;
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 3, 3);
+        if (p.life <= 0) particles.splice(i, 1);
       }
 
-      animationId = requestAnimationFrame(gameLoop);
+      if (frame % 6 === 0) updateHUD();
+      requestAnimationFrame(loop);
     }
+
+    document.getElementById('btnLaunch').addEventListener('click', startGame);
+    document.getElementById('btnRetry').addEventListener('click', startGame);
+    document.getElementById('btnBackMenu').addEventListener('click', () => {
+      document.getElementById('gameOverModal').style.display = 'none';
+      document.getElementById('mainMenu').style.display = 'flex';
+      updateMenuUI();
+    });
+
+    // INICIALIZAÇÃO
+    collectPassiveMining();
+    updateMenuUI();
   </script>
 </body>
 </html>
