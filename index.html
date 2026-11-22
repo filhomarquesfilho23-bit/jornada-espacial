@@ -73,43 +73,39 @@
       width: 100%;
       height: 100%;
       background: linear-gradient(90deg, #00d2ff, #00ffff);
-      transition: width 0.2s;
+      transition: width 0.15s ease;
     }
 
-    /* Telas Sobrepostas (Menu, Hangar, Game Over) */
+    /* Telas de Menu / Hangar / Fim de Jogo */
     .overlay {
       position: absolute;
       inset: 0;
       background: rgba(7, 11, 20, 0.92);
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       padding: 20px;
-      text-align: center;
       z-index: 10;
+      text-align: center;
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    h1 {
+    .title {
       font-size: 28px;
+      font-weight: 800;
       color: #00ffff;
-      text-shadow: 0 0 16px rgba(0, 255, 255, 0.7);
+      text-shadow: 0 0 18px rgba(0, 210, 255, 0.7);
       margin-bottom: 8px;
       letter-spacing: 1px;
     }
 
-    p.subtitle {
-      color: #a0b4cc;
+    .subtitle {
       font-size: 14px;
+      color: #a8c7fa;
       margin-bottom: 20px;
       max-width: 340px;
     }
 
-    /* Hangar de Naves */
     .hangar-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -125,87 +121,60 @@
       border-radius: 12px;
       padding: 12px 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
-    .ship-card.active {
+    .ship-card.selected {
       border-color: #00ffff;
-      box-shadow: 0 0 14px rgba(0, 255, 255, 0.35);
-      background: #111b29;
-    }
-
-    .ship-icon {
-      font-size: 26px;
-      margin-bottom: 6px;
+      box-shadow: 0 0 14px rgba(0, 255, 255, 0.4);
+      background: #111c2e;
     }
 
     .ship-name {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: bold;
-      color: #fff;
+      color: #ffffff;
       margin-bottom: 4px;
     }
 
     .ship-stat {
-      font-size: 10px;
+      font-size: 11px;
       color: #00d2ff;
-    }
-
-    /* Botões */
-    .btn {
-      width: 100%;
-      max-width: 320px;
-      padding: 14px 18px;
-      margin: 6px 0;
-      border: none;
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      transition: transform 0.1s, box-shadow 0.2s;
-    }
-
-    .btn:active {
-      transform: scale(0.97);
     }
 
     .btn-primary {
       background: linear-gradient(90deg, #00d2ff, #00ffff);
       color: #070b14;
-      box-shadow: 0 0 18px rgba(0, 210, 255, 0.5);
+      border: none;
+      border-radius: 12px;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+      width: 100%;
+      max-width: 280px;
     }
 
-    .btn-bonus {
-      background: #0d1117;
-      color: #00ffff;
-      border: 1.5px solid #00ffff;
-      box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
+    .btn-primary:active {
+      transform: scale(0.97);
     }
 
-    .bonus-badge {
-      display: inline-block;
-      margin-top: 6px;
-      font-size: 12px;
-      color: #00ff9d;
-      font-weight: bold;
-    }
-
-    #bossAlert {
+    #planetBanner {
       position: absolute;
       top: 75px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 30, 86, 0.2);
-      border: 1px solid #ff1e56;
-      color: #ff5c8a;
+      background: rgba(13, 17, 23, 0.9);
+      border: 1px solid #00ffff;
+      color: #00ffff;
       padding: 6px 16px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: bold;
-      z-index: 6;
       display: none;
+      z-index: 6;
+      box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
     }
   </style>
 </head>
@@ -213,490 +182,529 @@
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- HUD Durante a Partida -->
     <div id="hud">
       <div class="hud-item">
-        Destino: <span id="planetName">Órbita Lunar</span><br />
-        Pontos: <span id="scoreVal">0</span>
-      </div>
-      <div class="hud-item" style="text-align: right;">
-        Energia <span id="shieldTag" style="color:#00ff9d;"></span>
+        VIDA
         <div id="hpBarWrap"><div id="hpBar"></div></div>
       </div>
+      <div class="hud-item">SETOR: <span id="planetName">Órbita Terrestre</span></div>
+      <div class="hud-item">PONTOS: <span id="scoreVal">0</span></div>
     </div>
 
-    <div id="bossAlert">⚠️ CHEFÃO DETECTADO!</div>
+    <div id="planetBanner"></div>
 
-    <!-- Tela Inicial / Hangar -->
-    <div id="menuScreen" class="overlay">
-      <h1>JORNADA ESPACIAL</h1>
-      <p class="subtitle">Escolha sua nave no hangar, desvie dos asteroides e conquiste novos planetas.</p>
+    <!-- Menu & Hangar -->
+    <div id="startOverlay" class="overlay">
+      <div class="title">JORNADA ESPACIAL</div>
+      <div class="subtitle">Escolha sua nave no hangar e explore os setores planetários. Arraste o dedo na tela para pilotar e atirar.</div>
 
       <div class="hangar-grid">
-        <div class="ship-card active" onclick="selectShip(0, this)">
-          <div class="ship-icon">🚀</div>
-          <div class="ship-name">Falcão X1</div>
-          <div class="ship-stat">Vel: Alta | Tiro: Rápido</div>
+        <div class="ship-card selected" data-ship="0" onclick="selectShip(0)">
+          <div class="ship-name">FALCON V1</div>
+          <div class="ship-stat">Equilibrada<br>Tiro Duplo</div>
         </div>
-        <div class="ship-card" onclick="selectShip(1, this)">
-          <div class="ship-icon">🛸</div>
-          <div class="ship-name">Neon Viper</div>
-          <div class="ship-stat">Tiro Duplo | Ágil</div>
+        <div class="ship-card" data-ship="1" onclick="selectShip(1)">
+          <div class="ship-name">INTERCEPTOR</div>
+          <div class="ship-stat">Alta Vel.<br>Cadência +</div>
         </div>
-        <div class="ship-card" onclick="selectShip(2, this)">
-          <div class="ship-icon">🛰️</div>
-          <div class="ship-name">Titã V8</div>
-          <div class="ship-stat">Blindagem +50%</div>
+        <div class="ship-card" data-ship="2" onclick="selectShip(2)">
+          <div class="ship-name">TITAN X</div>
+          <div class="ship-stat">Blindada<br>Canhão Plasma</div>
         </div>
       </div>
 
-      <button class="btn btn-primary" onclick="startGame()">Iniciar Missão</button>
-      <button class="btn btn-bonus" id="btnMenuBonus" onclick="activateSmartlinkBonus('menu')">
-        🛡️ Liberar Escudo Extra (Grátis)
-      </button>
-      <div id="menuBonusStatus" class="bonus-badge"></div>
+      <button class="btn-primary" onclick="startGame()">INICIAR MISSÃO</button>
     </div>
 
     <!-- Tela de Game Over -->
-    <div id="gameOverScreen" class="overlay hidden">
-      <h1 style="color: #ff4d6d; text-shadow: 0 0 15px rgba(255,77,109,0.6);">NAVE DESTRUÍDA</h1>
-      <p class="subtitle">Pontuação Final: <strong id="finalScore" style="color:#00ffff;">0</strong><br />Planeta Alcançado: <strong id="finalPlanet" style="color:#00d2ff;">Órbita Lunar</strong></p>
-
-      <button class="btn btn-bonus" id="btnReviveBonus" onclick="activateSmartlinkBonus('revive')">
-        ⚡ Continuar Missão (Bônus)
-      </button>
-      <button class="btn btn-primary" onclick="startGame()">Jogar Novamente</button>
+    <div id="gameOverOverlay" class="overlay" style="display: none;">
+      <div class="title" id="endTitle">NAVE DESTRUÍDA</div>
+      <div class="subtitle" id="endSummary">Pontuação final: 0</div>
+      <button class="btn-primary" onclick="resetToMenu()">VOLTAR AO HANGAR</button>
     </div>
   </div>
 
   <script>
-    // URL Oficial do seu Smartlink Adsterra
-    const SMARTLINK_URL = "https://asiafilm.org/4/e4ca6435bc078464b818eb49776543b4";
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    const hud = document.getElementById('hud');
+    const hpBar = document.getElementById('hpBar');
+    const scoreVal = document.getElementById('scoreVal');
+    const planetNameEl = document.getElementById('planetName');
+    const planetBanner = document.getElementById('planetBanner');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const endSummary = document.getElementById('endSummary');
 
-    // Garante dimensionamento correto imediato no Android
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
-    // Configuração das 3 Naves do Hangar
     const SHIPS = [
-      { name: "Falcão X1", color: "#00ffff", maxHp: 100, fireRate: 14, doubleShot: false, radius: 18 },
-      { name: "Neon Viper", color: "#00d2ff", maxHp: 110, fireRate: 18, doubleShot: true, radius: 19 },
-      { name: "Titã V8", color: "#38bdf8", maxHp: 160, fireRate: 20, doubleShot: false, radius: 22 }
+      { name: 'FALCON V1', maxHp: 100, fireRate: 240, speed: 1.0, color: '#00ffff', bulletColor: '#00d2ff', power: 18 },
+      { name: 'INTERCEPTOR', maxHp: 80, fireRate: 150, speed: 1.25, color: '#38bdf8', bulletColor: '#7dd3fc', power: 14 },
+      { name: 'TITAN X', maxHp: 150, fireRate: 340, speed: 0.85, color: '#00d2ff', bulletColor: '#00ffff', power: 32 }
     ];
 
     const PLANETS = [
-      { score: 0, name: "Órbita Lunar", color: "#94a3b8" },
-      { score: 300, name: "Marte Rubro", color: "#f97316" },
-      { score: 700, name: "Cinturão de Júpiter", color: "#eab308" },
-      { score: 1200, name: "Anéis de Saturno", color: "#22d3ee" },
-      { score: 2000, name: "Nebulosa Ômega", color: "#a855f7" }
+      { name: 'Órbita Terrestre', threshold: 0, color: '#1d4ed8' },
+      { name: 'Cinturão de Marte', threshold: 250, color: '#dc2626' },
+      { name: 'Tempestade de Júpiter', threshold: 600, color: '#d97706' },
+      { name: 'Anéis de Saturno', threshold: 1100, color: '#eab308' },
+      { name: 'Abismo de Netuno', threshold: 1800, color: '#0284c7' }
     ];
 
     let selectedShipIndex = 0;
     let gameRunning = false;
+    let animationId = null;
+    let lastTime = 0;
+    let lastShot = 0;
+    let spawnTimer = 0;
+
     let score = 0;
-    let frameCount = 0;
-    let bonusShieldReady = false;
-    let reviveUsed = false;
-
-    let player = {
-      x: canvas.width / 2,
-      y: canvas.height - 110,
-      hp: 100,
-      maxHp: 100,
-      shield: 0,
-      doubleTimer: 0
-    };
-
+    let currentPlanetIdx = 0;
     let stars = [];
     let bullets = [];
     let enemies = [];
-    let powerups = [];
     let particles = [];
+    let powerups = [];
     let boss = null;
     let nextBossScore = 500;
 
-    // Estrelas de fundo
-    for (let i = 0; i < 70; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2 + 0.5,
-        speed: Math.random() * 2 + 0.8
+    const player = {
+      x: 0,
+      y: 0,
+      targetX: 0,
+      targetY: 0,
+      radius: 20,
+      hp: 100,
+      maxHp: 100,
+      weaponLevel: 1
+    };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      if (!gameRunning) {
+        player.x = canvas.width / 2;
+        player.y = canvas.height * 0.78;
+        player.targetX = player.x;
+        player.targetY = player.y;
+      }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 75; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2 + 0.6,
+          speed: Math.random() * 1.8 + 0.5
+        });
+      }
+    }
+
+    function selectShip(index) {
+      selectedShipIndex = index;
+      document.querySelectorAll('.ship-card').forEach((card, idx) => {
+        card.classList.toggle('selected', idx === index);
       });
     }
 
-    function selectShip(index, el) {
-      selectedShipIndex = index;
-      document.querySelectorAll(".ship-card").forEach(c => c.classList.remove("active"));
-      el.classList.add("active");
-    }
-
-    // Abre o Smartlink em nova aba e concede o bônus no jogo
-    function activateSmartlinkBonus(mode) {
-      window.open(SMARTLINK_URL, "_blank", "noopener,noreferrer");
-
-      if (mode === "menu") {
-        bonusShieldReady = true;
-        document.getElementById("menuBonusStatus").textContent = "✓ Escudo Extra ativado para a próxima partida!";
-        document.getElementById("btnMenuBonus").textContent = "🛡️ Escudo Garantido!";
-      } else if (mode === "revive" && !reviveUsed) {
-        reviveUsed = true;
-        document.getElementById("gameOverScreen").classList.add("hidden");
-        document.getElementById("hud").style.display = "flex";
-        player.hp = Math.ceil(player.maxHp * 0.6);
-        player.shield = 240; // 4 segundos de invulnerabilidade
-        enemies = [];
-        gameRunning = true;
-        updateHUD();
-        requestAnimationFrame(gameLoop);
-      }
+    function showBanner(text) {
+      planetBanner.textContent = text;
+      planetBanner.style.display = 'block';
+      clearTimeout(planetBanner._timer);
+      planetBanner._timer = setTimeout(() => {
+        planetBanner.style.display = 'none';
+      }, 2600);
     }
 
     function startGame() {
       resizeCanvas();
-      const ship = SHIPS[selectedShipIndex];
+      const spec = SHIPS[selectedShipIndex];
+      player.maxHp = spec.maxHp;
+      player.hp = spec.maxHp;
+      player.x = canvas.width / 2;
+      player.y = canvas.height * 0.78;
+      player.targetX = player.x;
+      player.targetY = player.y;
+      player.weaponLevel = 1;
+
       score = 0;
-      frameCount = 0;
-      reviveUsed = false;
+      currentPlanetIdx = 0;
       nextBossScore = 500;
-      boss = null;
       bullets = [];
       enemies = [];
-      powerups = [];
       particles = [];
+      powerups = [];
+      boss = null;
 
-      player = {
-        x: canvas.width / 2,
-        y: canvas.height - 110,
-        hp: ship.maxHp,
-        maxHp: ship.maxHp,
-        shield: bonusShieldReady ? 600 : 0, // 10 segundos de escudo se ativou o bônus
-        doubleTimer: 0
-      };
-      bonusShieldReady = false;
-      document.getElementById("menuBonusStatus").textContent = "";
-      document.getElementById("btnMenuBonus").textContent = "🛡️ Liberar Escudo Extra (Grátis)";
-      document.getElementById("btnReviveBonus").style.display = "inline-block";
+      initStars();
+      updateHud();
 
-      document.getElementById("menuScreen").classList.add("hidden");
-      document.getElementById("gameOverScreen").classList.add("hidden");
-      document.getElementById("bossAlert").style.display = "none";
-      document.getElementById("hud").style.display = "flex";
+      startOverlay.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      hud.style.display = 'flex';
+      showBanner('SETOR: ' + PLANETS[0].name.toUpperCase());
 
-      updateHUD();
       gameRunning = true;
-      requestAnimationFrame(gameLoop);
+      lastTime = performance.now();
+      cancelAnimationFrame(animationId);
+      animationId = requestAnimationFrame(gameLoop);
     }
 
-    // Controles Touch e Mouse suaves
-    function movePlayer(clientX, clientY) {
+    function resetToMenu() {
+      gameRunning = false;
+      cancelAnimationFrame(animationId);
+      hud.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      startOverlay.style.display = 'flex';
+    }
+
+    function endGame() {
+      gameRunning = false;
+      cancelAnimationFrame(animationId);
+      hud.style.display = 'none';
+      endSummary.textContent = `Setor alcançado: ${PLANETS[currentPlanetIdx].name} • Pontuação: ${score}`;
+      gameOverOverlay.style.display = 'flex';
+    }
+
+    function updateHud() {
+      const pct = Math.max(0, (player.hp / player.maxHp) * 100);
+      hpBar.style.width = pct + '%';
+      scoreVal.textContent = score;
+      planetNameEl.textContent = PLANETS[currentPlanetIdx].name;
+    }
+
+    // Controles Touch e Mouse
+    function handlePointer(clientX, clientY) {
       if (!gameRunning) return;
-      player.x = Math.max(24, Math.min(canvas.width - 24, clientX));
-      player.y = Math.max(80, Math.min(canvas.height - 40, clientY - 35));
+      player.targetX = Math.max(24, Math.min(canvas.width - 24, clientX));
+      player.targetY = Math.max(70, Math.min(canvas.height - 30, clientY - 35));
     }
 
-    canvas.addEventListener("touchmove", (e) => {
-      e.preventDefault();
+    canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length > 0) {
-        movePlayer(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    }, { passive: false });
-
-    canvas.addEventListener("touchstart", (e) => {
-      if (e.touches.length > 0) {
-        movePlayer(e.touches[0].clientX, e.touches[0].clientY);
+        handlePointer(e.touches[0].clientX, e.touches[0].clientY);
       }
     }, { passive: true });
 
-    canvas.addEventListener("mousemove", (e) => {
-      if (e.buttons === 1) movePlayer(e.clientX, e.clientY);
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) {
+        handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (e.buttons === 1) {
+        handlePointer(e.clientX, e.clientY);
+      }
     });
 
-    function getCurrentPlanet() {
-      let current = PLANETS[0];
-      for (const p of PLANETS) {
-        if (score >= p.score) current = p;
+    function spawnBullets(now) {
+      const spec = SHIPS[selectedShipIndex];
+      if (now - lastShot < spec.fireRate) return;
+      lastShot = now;
+
+      if (player.weaponLevel === 1) {
+        bullets.push({ x: player.x, y: player.y - 22, vx: 0, vy: -9, power: spec.power, color: spec.bulletColor });
+      } else if (player.weaponLevel === 2) {
+        bullets.push({ x: player.x - 10, y: player.y - 18, vx: 0, vy: -9.5, power: spec.power, color: spec.bulletColor });
+        bullets.push({ x: player.x + 10, y: player.y - 18, vx: 0, vy: -9.5, power: spec.power, color: spec.bulletColor });
+      } else {
+        bullets.push({ x: player.x, y: player.y - 24, vx: 0, vy: -10, power: spec.power, color: '#00ffff' });
+        bullets.push({ x: player.x - 14, y: player.y - 14, vx: -1.3, vy: -9.5, power: spec.power * 0.8, color: spec.bulletColor });
+        bullets.push({ x: player.x + 14, y: player.y - 14, vx: 1.3, vy: -9.5, power: spec.power * 0.8, color: spec.bulletColor });
       }
-      return current;
     }
 
-    function updateHUD() {
-      const planet = getCurrentPlanet();
-      document.getElementById("planetName").textContent = planet.name;
-      document.getElementById("planetName").style.color = planet.color;
-      document.getElementById("scoreVal").textContent = score;
-      const pct = Math.max(0, (player.hp / player.maxHp) * 100);
-      document.getElementById("hpBar").style.width = pct + "%";
-      document.getElementById("shieldTag").textContent = player.shield > 0 ? " [ESCUDO]" : "";
+    function spawnEnemy() {
+      const radius = Math.random() * 10 + 16;
+      const hp = 25 + currentPlanetIdx * 15;
+      enemies.push({
+        x: Math.random() * (canvas.width - 50) + 25,
+        y: -30,
+        radius,
+        hp,
+        maxHp: hp,
+        vy: Math.random() * 1.6 + 1.8 + currentPlanetIdx * 0.3,
+        vx: (Math.random() - 0.5) * 1.4
+      });
     }
 
-    function spawnParticles(x, y, color, count = 10) {
+    function spawnBoss() {
+      const maxHp = 350 + currentPlanetIdx * 180;
+      boss = {
+        x: canvas.width / 2,
+        y: 125,
+        radius: 46,
+        hp: maxHp,
+        maxHp,
+        vx: 2.2,
+        shootTimer: 0
+      };
+      showBanner('ALERTA: NAVE-MÃE DETECTADA!');
+    }
+
+    function createExplosion(x, y, color, count = 14) {
       for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 3.5 + 1;
         particles.push({
-          x, y,
-          vx: (Math.random() - 0.5) * 6,
-          vy: (Math.random() - 0.5) * 6,
-          life: 25,
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
           color
         });
       }
     }
 
-    function drawShip(x, y, color) {
+    function checkPlanetProgress() {
+      for (let i = PLANETS.length - 1; i >= 0; i--) {
+        if (score >= PLANETS[i].threshold && currentPlanetIdx < i) {
+          currentPlanetIdx = i;
+          showBanner('NOVO SETOR: ' + PLANETS[i].name.toUpperCase());
+          break;
+        }
+      }
+      if (!boss && score >= nextBossScore) {
+        spawnBoss();
+      }
+    }
+
+    function drawShip() {
+      const spec = SHIPS[selectedShipIndex];
       ctx.save();
-      ctx.translate(x, y);
+      ctx.translate(player.x, player.y);
 
-      // Chama do propulsor
-      ctx.fillStyle = "#00ffff";
+      // Propulsor
+      ctx.fillStyle = '#00ffff';
       ctx.beginPath();
-      ctx.moveTo(-6, 16);
+      ctx.moveTo(-7, 16);
       ctx.lineTo(0, 26 + Math.random() * 8);
-      ctx.lineTo(6, 16);
-      ctx.fill();
-
-      // Corpo da nave
-      ctx.fillStyle = color;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 12;
-      ctx.beginPath();
-      ctx.moveTo(0, -22);
-      ctx.lineTo(18, 16);
-      ctx.lineTo(0, 10);
-      ctx.lineTo(-18, 16);
+      ctx.lineTo(7, 16);
       ctx.closePath();
       ctx.fill();
 
-      // Cabine
-      ctx.fillStyle = "#070b14";
+      // Fuselagem
+      ctx.fillStyle = '#0d1117';
+      ctx.strokeStyle = spec.color;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(0, -2, 5, 0, Math.PI * 2);
+      ctx.moveTo(0, -24);
+      ctx.lineTo(20, 16);
+      ctx.lineTo(0, 10);
+      ctx.lineTo(-20, 16);
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
 
-      // Escudo ativo
-      if (player.shield > 0) {
-        ctx.strokeStyle = "#00ff9d";
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, 28, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+      // Cabine
+      ctx.fillStyle = '#00ffff';
+      ctx.beginPath();
+      ctx.arc(0, -3, 4.5, 0, Math.PI * 2);
+      ctx.fill();
 
       ctx.restore();
     }
 
-    function triggerGameOver() {
-      gameRunning = false;
-      document.getElementById("hud").style.display = "none";
-      document.getElementById("bossAlert").style.display = "none";
-      document.getElementById("finalScore").textContent = score;
-      document.getElementById("finalPlanet").textContent = getCurrentPlanet().name;
-      if (reviveUsed) {
-        document.getElementById("btnReviveBonus").style.display = "none";
-      }
-      document.getElementById("gameOverScreen").classList.remove("hidden");
-    }
-
-    function gameLoop() {
+    function gameLoop(now) {
       if (!gameRunning) return;
-      frameCount++;
+      const dt = now - lastTime;
+      lastTime = now;
 
-      // Limpa tela
-      ctx.fillStyle = "#070b14";
+      ctx.fillStyle = '#070b14';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Estrelas
-      ctx.fillStyle = "#ffffff";
-      stars.forEach(s => {
+      // Fundo estrelado
+      for (const s of stars) {
         s.y += s.speed;
         if (s.y > canvas.height) {
           s.y = 0;
           s.x = Math.random() * canvas.width;
         }
-        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
         ctx.fillRect(s.x, s.y, s.size, s.size);
-      });
-      ctx.globalAlpha = 1;
-
-      const ship = SHIPS[selectedShipIndex];
-      if (player.shield > 0) player.shield--;
-      if (player.doubleTimer > 0) player.doubleTimer--;
-
-      // Disparo automático
-      if (frameCount % ship.fireRate === 0) {
-        const isDouble = ship.doubleShot || player.doubleTimer > 0;
-        if (isDouble) {
-          bullets.push({ x: player.x - 10, y: player.y - 16, vy: -10 });
-          bullets.push({ x: player.x + 10, y: player.y - 16, vy: -10 });
-        } else {
-          bullets.push({ x: player.x, y: player.y - 20, vy: -11 });
-        }
       }
 
-      // Atualiza tiros
-      ctx.fillStyle = "#00ffff";
-      bullets = bullets.filter(b => {
+      // Movimento suave do jogador
+      const spec = SHIPS[selectedShipIndex];
+      player.x += (player.targetX - player.x) * 0.22 * spec.speed;
+      player.y += (player.targetY - player.y) * 0.22 * spec.speed;
+
+      spawnBullets(now);
+      drawShip();
+
+      // Tiros do jogador
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.x += b.vx;
         b.y += b.vy;
+        ctx.fillStyle = b.color;
         ctx.fillRect(b.x - 2, b.y - 8, 4, 14);
-        return b.y > -20;
-      });
-
-      // Spawn de inimigos
-      if (!boss && frameCount % 38 === 0) {
-        enemies.push({
-          x: Math.random() * (canvas.width - 50) + 25,
-          y: -30,
-          r: 16 + Math.random() * 10,
-          vy: 2.8 + Math.min(4, score / 400),
-          hp: 2
-        });
-      }
-
-      // Spawn de Power-ups
-      if (frameCount % 420 === 0) {
-        powerups.push({
-          x: Math.random() * (canvas.width - 50) + 25,
-          y: -25,
-          type: Math.random() > 0.5 ? "shield" : "double",
-          vy: 2.5
-        });
-      }
-
-      // Ativa Chefão
-      if (!boss && score >= nextBossScore) {
-        boss = {
-          x: canvas.width / 2,
-          y: 110,
-          vx: 2.5,
-          r: 42,
-          hp: 35 + Math.floor(score / 40),
-          maxHp: 35 + Math.floor(score / 40)
-        };
-        document.getElementById("bossAlert").style.display = "block";
-      }
-
-      // Atualiza Power-ups
-      powerups = powerups.filter(p => {
-        p.y += p.vy;
-        ctx.fillStyle = p.type === "shield" ? "#00ff9d" : "#facc15";
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 13, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#070b14";
-        ctx.font = "bold 12px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(p.type === "shield" ? "S" : "2X", p.x, p.y + 4);
-
-        if (Math.hypot(player.x - p.x, player.y - p.y) < 32) {
-          if (p.type === "shield") player.shield = 360;
-          else player.doubleTimer = 420;
-          score += 25;
-          updateHUD();
-          return false;
+        if (b.y < -20 || b.y > canvas.height + 20) {
+          bullets.splice(i, 1);
         }
-        return p.y < canvas.height + 30;
-      });
+      }
 
-      // Atualiza Inimigos
-      enemies = enemies.filter(e => {
+      // Spawn de inimigos comuns
+      spawnTimer += dt;
+      if (!boss && spawnTimer > Math.max(480, 1100 - currentPlanetIdx * 120)) {
+        spawnEnemy();
+        spawnTimer = 0;
+      }
+
+      // Atualizar inimigos
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        e.x += e.vx;
         e.y += e.vy;
+        if (e.x < e.radius || e.x > canvas.width - e.radius) e.vx *= -1;
 
-        // Colisão com tiros
-        for (let i = bullets.length - 1; i >= 0; i--) {
-          if (Math.hypot(bullets[i].x - e.x, bullets[i].y - e.y) < e.r + 6) {
-            bullets.splice(i, 1);
-            e.hp--;
-            if (e.hp <= 0) {
-              score += 20;
-              spawnParticles(e.x, e.y, "#00d2ff", 8);
-              updateHUD();
-              return false;
-            }
-          }
-        }
-
-        // Colisão com a nave
-        if (Math.hypot(player.x - e.x, player.y - e.y) < e.r + ship.radius) {
-          spawnParticles(e.x, e.y, "#ff4d6d", 12);
-          if (player.shield <= 0) {
-            player.hp -= 25;
-            updateHUD();
-            if (player.hp <= 0) {
-              triggerGameOver();
-            }
-          }
-          return false;
-        }
-
-        // Desenha asteroide/nave inimiga
-        ctx.fillStyle = "#1e293b";
-        ctx.strokeStyle = "#ff4d6d";
+        ctx.fillStyle = '#161b22';
+        ctx.strokeStyle = '#ff4d6d';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+        ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        return e.y < canvas.height + 40;
-      });
+        // Colisão tiro x inimigo
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          const b = bullets[j];
+          if (b.vy < 0 && Math.hypot(b.x - e.x, b.y - e.y) < e.radius + 5) {
+            e.hp -= b.power;
+            bullets.splice(j, 1);
+            if (e.hp <= 0) {
+              createExplosion(e.x, e.y, '#ff4d6d');
+              score += 25;
+              if (Math.random() < 0.16) {
+                powerups.push({ x: e.x, y: e.y, type: Math.random() < 0.5 ? 'weapon' : 'heal' });
+              }
+              enemies.splice(i, 1);
+              checkPlanetProgress();
+              updateHud();
+            }
+            break;
+          }
+        }
 
-      // Atualiza Chefão
+        // Colisão nave x inimigo
+        if (enemies[i] && Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.radius) {
+          createExplosion(e.x, e.y, '#ff4d6d');
+          enemies.splice(i, 1);
+          player.hp -= 20;
+          updateHud();
+          if (player.hp <= 0) return endGame();
+        } else if (enemies[i] && e.y > canvas.height + 40) {
+          enemies.splice(i, 1);
+        }
+      }
+
+      // Lógica do Chefão (Boss)
       if (boss) {
         boss.x += boss.vx;
-        if (boss.x < 55 || boss.x > canvas.width - 55) boss.vx *= -1;
+        if (boss.x < boss.radius + 16 || boss.x > canvas.width - boss.radius - 16) {
+          boss.vx *= -1;
+        }
 
-        for (let i = bullets.length - 1; i >= 0; i--) {
-          if (Math.hypot(bullets[i].x - boss.x, bullets[i].y - boss.y) < boss.r + 6) {
-            bullets.splice(i, 1);
-            boss.hp--;
+        boss.shootTimer += dt;
+        if (boss.shootTimer > 950) {
+          boss.shootTimer = 0;
+          bullets.push({ x: boss.x, y: boss.y + boss.radius, vx: 0, vy: 5.2, power: 18, color: '#ff4d6d' });
+          bullets.push({ x: boss.x - 18, y: boss.y + 30, vx: -1.4, vy: 4.8, power: 18, color: '#ff4d6d' });
+          bullets.push({ x: boss.x + 18, y: boss.y + 30, vx: 1.4, vy: 4.8, power: 18, color: '#ff4d6d' });
+        }
+
+        ctx.fillStyle = '#0d1117';
+        ctx.strokeStyle = '#ff0055';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(boss.x, boss.y, boss.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Barra de vida do Boss
+        const bw = 90;
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(boss.x - bw / 2, boss.y - boss.radius - 14, bw, 7);
+        ctx.fillStyle = '#ff0055';
+        ctx.fillRect(boss.x - bw / 2, boss.y - boss.radius - 14, bw * (boss.hp / boss.maxHp), 7);
+
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          const b = bullets[j];
+          if (b.vy < 0 && Math.hypot(b.x - boss.x, b.y - boss.y) < boss.radius + 6) {
+            boss.hp -= b.power;
+            bullets.splice(j, 1);
             if (boss.hp <= 0) {
+              createExplosion(boss.x, boss.y, '#00ffff', 32);
               score += 200;
-              spawnParticles(boss.x, boss.y, "#ff1e56", 25);
+              nextBossScore = score + 650;
               boss = null;
-              nextBossScore += 700;
-              document.getElementById("bossAlert").style.display = "none";
-              updateHUD();
+              checkPlanetProgress();
+              updateHud();
               break;
             }
           }
         }
+      }
 
-        if (boss) {
-          ctx.fillStyle = "#2b0918";
-          ctx.strokeStyle = "#ff1e56";
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(boss.x, boss.y, boss.r, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
+      // Tiros inimigos atingindo o jogador
+      for (let j = bullets.length - 1; j >= 0; j--) {
+        const b = bullets[j];
+        if (b.vy > 0 && Math.hypot(b.x - player.x, b.y - player.y) < player.radius) {
+          bullets.splice(j, 1);
+          player.hp -= b.power;
+          updateHud();
+          if (player.hp <= 0) return endGame();
+        }
+      }
 
-          // Barra de vida do Chefão
-          ctx.fillStyle = "#ff1e56";
-          ctx.fillRect(boss.x - 35, boss.y - boss.r - 12, 70 * (boss.hp / boss.maxHp), 6);
+      // Power-ups
+      for (let i = powerups.length - 1; i >= 0; i--) {
+        const p = powerups[i];
+        p.y += 2.2;
+        ctx.fillStyle = p.type === 'weapon' ? '#00ffff' : '#22c55e';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 11, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (Math.hypot(p.x - player.x, p.y - player.y) < player.radius + 12) {
+          if (p.type === 'weapon') {
+            player.weaponLevel = Math.min(3, player.weaponLevel + 1);
+            showBanner('ARMA APRIMORADA!');
+          } else {
+            player.hp = Math.min(player.maxHp, player.hp + 30);
+            showBanner('ESCUDO REPARADO!');
+            updateHud();
+          }
+          powerups.splice(i, 1);
+        } else if (p.y > canvas.height + 20) {
+          powerups.splice(i, 1);
         }
       }
 
       // Partículas
-      particles = particles.filter(pt => {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
         pt.x += pt.vx;
         pt.y += pt.vy;
-        pt.life--;
+        pt.life -= 0.035;
+        if (pt.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.globalAlpha = pt.life;
         ctx.fillStyle = pt.color;
-        ctx.globalAlpha = pt.life / 25;
-        ctx.fillRect(pt.x, pt.y, 4, 4);
-        return pt.life > 0;
-      });
-      ctx.globalAlpha = 1;
+        ctx.fillRect(pt.x, pt.y, 3, 3);
+        ctx.globalAlpha = 1;
+      }
 
-      drawShip(player.x, player.y, ship.color);
-      requestAnimationFrame(gameLoop);
+      animationId = requestAnimationFrame(gameLoop);
     }
   </script>
 </body>
