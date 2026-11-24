@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Jornada Espacial</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00d2ff">
@@ -17,7 +17,7 @@
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100%;
+      height: 100dvh;
       overflow: hidden;
       overscroll-behavior: none;
       touch-action: none;
@@ -29,7 +29,7 @@
     #gameWrapper {
       position: relative;
       width: 100vw;
-      height: 100vh;
+      height: 100dvh;
       background: #070b14;
     }
 
@@ -123,10 +123,10 @@
       position: absolute;
       top: 8px;
       right: 6px;
-      bottom: 84px;
+      bottom: 126px;
       width: 86px;
-      background: rgba(13, 17, 23, 0.82);
-      border: 1px solid rgba(0, 210, 255, 0.32);
+      background: rgba(13, 17, 23, 0.85);
+      border: 1px solid rgba(0, 210, 255, 0.35);
       border-radius: 10px;
       padding: 6px 4px;
       display: flex;
@@ -201,33 +201,33 @@
       color: #e6edf3;
     }
 
-    /* Botões circulares + direcionais */
+    /* Botões circulares + direcionais bem acima da barra inferior do Android */
     .controls-bottom {
       position: absolute;
-      bottom: 12px;
+      bottom: calc(44px + env(safe-area-inset-bottom, 0px));
       left: 10px;
       right: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 16;
+      z-index: 20;
       pointer-events: none;
     }
 
     .move-group {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       pointer-events: auto;
     }
 
     .pad-btn {
-      width: 42px;
-      height: 42px;
+      width: 46px;
+      height: 46px;
       border-radius: 10px;
-      border: 1px solid rgba(0, 210, 255, 0.45);
-      background: rgba(13, 17, 23, 0.85);
+      border: 1px solid rgba(0, 210, 255, 0.55);
+      background: rgba(13, 17, 23, 0.92);
       color: #00ffff;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 800;
       cursor: pointer;
     }
@@ -235,23 +235,23 @@
     .orb-group {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       pointer-events: auto;
     }
 
     .squad-orb {
-      width: 54px;
-      height: 54px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
-      border: 1px solid rgba(0, 210, 255, 0.45);
-      background: rgba(16, 28, 38, 0.92);
+      border: 1px solid rgba(0, 210, 255, 0.55);
+      background: rgba(16, 28, 38, 0.95);
       color: #00ffff;
       font-size: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 12px rgba(0, 210, 255, 0.25);
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.28);
     }
 
     .squad-orb:disabled {
@@ -260,11 +260,11 @@
     }
 
     .pronto-orb {
-      width: 64px;
-      height: 64px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       border: 2px solid #00ffff;
-      background: radial-gradient(circle, rgba(0, 210, 255, 0.35) 0%, rgba(7, 11, 20, 0.95) 75%);
+      background: radial-gradient(circle, rgba(0, 210, 255, 0.38) 0%, rgba(7, 11, 20, 0.96) 75%);
       color: #ffd166;
       display: flex;
       flex-direction: column;
@@ -281,7 +281,7 @@
     }
 
     .pronto-bolt {
-      font-size: 18px;
+      font-size: 17px;
       line-height: 1;
     }
 
@@ -406,13 +406,54 @@
     const PLANET_DURATION_MS = 60000;
     const SHOT_COLORS = ['#00ffff', '#ff4d6d', '#ffd166', '#38bdf8', '#4ade80', '#f472b6', '#c084fc'];
     const STAR_COLORS = ['#00ffff', '#ffd166', '#ff758f', '#7dd3fc', '#4ade80', '#f472b6', '#ffffff'];
+    const ROCK_COLORS = ['#ff9e00', '#ff6b35', '#ffd166', '#fb7185', '#38bdf8', '#f59e0b'];
 
     const PLANETS = [
-      { name: 'Vênus', alert: 'Comandante: Atenção! Rumo a Vênus — aviso: cuidado com o desafio de calor, rochas, satélites e naves hostis!' },
-      { name: 'Marte', alert: 'Comandante: Atenção! Avistamos o Planeta Marte — aviso: cuidado com o desafio das tempestades e batalhas no espaço!' },
-      { name: 'Júpiter', alert: 'Comandante: Atenção! Entrando na órbita de Júpiter — aviso: cuidado com o desafio da gravidade e enxame de rochas!' },
-      { name: 'Saturno', alert: 'Comandante: Atenção! Aproximando dos anéis de Saturno — aviso: cuidado com o desafio dos satélites e naves em alta velocidade!' },
-      { name: 'Netuno', alert: 'Comandante: Atenção! Setor profundo de Netuno — aviso: cuidado com o desafio final do sistema!' }
+      {
+        name: 'Vênus',
+        theme: 'venus',
+        bgTop: '#241608',
+        bgBottom: '#070b14',
+        nebula: 'rgba(255, 179, 71, 0.16)',
+        accent: '#ffb347',
+        alert: 'Comandante: Atenção! Rumo a Vênus — aviso: cuidado com o desafio de calor, rochas, satélites e naves hostis!'
+      },
+      {
+        name: 'Marte',
+        theme: 'mars',
+        bgTop: '#290d0c',
+        bgBottom: '#070b14',
+        nebula: 'rgba(255, 77, 109, 0.16)',
+        accent: '#ff6b6b',
+        alert: 'Comandante: Atenção! Avistamos o Planeta Marte — aviso: cuidado com o desafio das tempestades e batalhas no espaço!'
+      },
+      {
+        name: 'Júpiter',
+        theme: 'jupiter',
+        bgTop: '#161b33',
+        bgBottom: '#070b14',
+        nebula: 'rgba(56, 189, 248, 0.15)',
+        accent: '#38bdf8',
+        alert: 'Comandante: Atenção! Entrando na órbita de Júpiter — aviso: cuidado com o desafio da gravidade e enxame de rochas!'
+      },
+      {
+        name: 'Saturno',
+        theme: 'saturn',
+        bgTop: '#1b1330',
+        bgBottom: '#070b14',
+        nebula: 'rgba(192, 132, 252, 0.16)',
+        accent: '#c084fc',
+        alert: 'Comandante: Atenção! Aproximando dos anéis de Saturno — aviso: cuidado com o desafio dos satélites e naves em alta velocidade!'
+      },
+      {
+        name: 'Netuno',
+        theme: 'neptune',
+        bgTop: '#071f2b',
+        bgBottom: '#070b14',
+        nebula: 'rgba(0, 255, 255, 0.15)',
+        accent: '#00ffff',
+        alert: 'Comandante: Atenção! Setor profundo de Netuno — aviso: cuidado com o desafio final do sistema!'
+      }
     ];
 
     const SHIPS = {
@@ -450,8 +491,8 @@
     };
 
     const player = {
-      x: 160,
-      y: 470,
+      x: 150,
+      y: 430,
       w: 44,
       h: 52
     };
@@ -466,6 +507,8 @@
     let enemies = [];
     let satellites = [];
     let comets = [];
+    let yellowLights = [];
+    let wingmen = [];
     let stars = [];
 
     function nextShotColor() {
@@ -479,13 +522,30 @@
       state.maxAmmo = Math.max(state.maxAmmo, state.ammo);
     }
 
+    function healPlayer(amount) {
+      const maxS = SHIPS[state.shipKey].maxShield;
+      state.shield = Math.min(maxS, state.shield + amount);
+    }
+
+    function spawnYellowLight(x, y) {
+      yellowLights.push({
+        x,
+        y,
+        r: 12,
+        vy: 2.1,
+        heal: 15,
+        energy: 15,
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+
     function resizeCanvas() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.floor(canvas.clientWidth * dpr);
       canvas.height = Math.floor(canvas.clientHeight * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      player.y = canvas.clientHeight - 130;
+      player.y = canvas.clientHeight - 175;
       player.x = Math.min(Math.max(player.x, 18), Math.max(canvas.clientWidth - 115, 18));
     }
 
@@ -497,6 +557,76 @@
         v: Math.random() * 2.1 + 0.8,
         color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)]
       }));
+    }
+
+    function drawPlanetScenario(w, h, now, planet) {
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+      bgGrad.addColorStop(0, planet.bgTop);
+      bgGrad.addColorStop(1, planet.bgBottom);
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Nuvem/nebulosa temática do planeta atual
+      const cx = (w - 90) * 0.5;
+      const cy = h * 0.34;
+      const nebGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(w, h) * 0.45);
+      nebGrad.addColorStop(0, planet.nebula);
+      nebGrad.addColorStop(1, 'rgba(7, 11, 20, 0)');
+      ctx.fillStyle = nebGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      if (planet.theme === 'venus') {
+        // Ondas quentes de atmosfera de Vênus
+        ctx.strokeStyle = 'rgba(255, 179, 71, 0.16)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+          const yOff = ((now * 0.04 + i * 110) % (h + 80)) - 40;
+          ctx.beginPath();
+          ctx.moveTo(0, yOff);
+          ctx.bezierCurveTo(w * 0.3, yOff - 24, w * 0.6, yOff + 24, w, yOff);
+          ctx.stroke();
+        }
+      } else if (planet.theme === 'mars') {
+        // Faixas de poeira marciana ao fundo
+        ctx.fillStyle = 'rgba(255, 107, 107, 0.08)';
+        for (let i = 0; i < 5; i++) {
+          const bandY = ((now * 0.05 + i * 130) % (h + 60)) - 30;
+          ctx.fillRect(0, bandY, w, 14);
+        }
+      } else if (planet.theme === 'jupiter') {
+        // Faixas atmosféricas largas de Júpiter
+        const stripeColors = ['rgba(56, 189, 248, 0.09)', 'rgba(255, 209, 102, 0.07)'];
+        for (let i = 0; i < 6; i++) {
+          const yPos = ((now * 0.03 + i * 105) % (h + 60)) - 30;
+          ctx.fillStyle = stripeColors[i % stripeColors.length];
+          ctx.fillRect(0, yPos, w, 20);
+        }
+      } else if (planet.theme === 'saturn') {
+        // Anéis de Saturno inclinados ao fundo
+        ctx.strokeStyle = 'rgba(192, 132, 252, 0.22)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, w * 0.44, 24, -0.22, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(0, 210, 255, 0.14)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, w * 0.52, 30, -0.22, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (planet.theme === 'neptune') {
+        // Linhas verticais de vento gelado de Netuno
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.12)';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 6; i++) {
+          const rx = ((now * 0.06 + i * 75) % (w - 90)) + 12;
+          ctx.beginPath();
+          ctx.moveTo(rx, 0);
+          ctx.lineTo(rx, h);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
     }
 
     function showCommanderAlert(message) {
@@ -578,8 +708,7 @@
         state.planetIndex += 1;
         state.planetEnteredAt = now;
         addEnergy(120);
-        const maxS = SHIPS[state.shipKey].maxShield;
-        state.shield = Math.min(maxS, state.shield + 20);
+        healPlayer(20);
         const planet = PLANETS[state.planetIndex % PLANETS.length];
         showCommanderAlert(planet.alert);
       }
@@ -697,6 +826,7 @@
       const baseSpeed = 2.4 + difficulty * 0.75 + Math.random() * 1.6;
       const driftX = (Math.random() - 0.5) * 1.1;
       const hp = 1 + Math.floor(difficulty / 2);
+      const color = ROCK_COLORS[Math.floor(Math.random() * ROCK_COLORS.length)];
 
       comets.push({
         x: Math.random() * playableWidth + 24,
@@ -706,8 +836,32 @@
         vy: baseSpeed,
         angle: Math.random() * Math.PI * 2,
         spin: (Math.random() - 0.5) * 0.06,
+        color,
         hp
       });
+    }
+
+    function drawYellowLight(light, now) {
+      const glow = 1 + Math.sin(now * 0.01 + light.pulse) * 0.22;
+      const rad = light.r * glow;
+
+      ctx.save();
+      const grad = ctx.createRadialGradient(light.x, light.y, 2, light.x, light.y, rad * 2.2);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.35, '#ffe066');
+      grad.addColorStop(0.75, 'rgba(255, 209, 102, 0.45)');
+      grad.addColorStop(1, 'rgba(255, 209, 102, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(light.x, light.y, rad * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff3b0';
+      ctx.beginPath();
+      ctx.arc(light.x, light.y, rad * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     function drawSatellite(sat) {
@@ -715,7 +869,6 @@
       ctx.translate(sat.x, sat.y);
       ctx.rotate(sat.angle);
 
-      // Painéis solares laterais
       ctx.fillStyle = 'rgba(0, 210, 255, 0.22)';
       ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 1.6;
@@ -724,7 +877,6 @@
       ctx.fillRect(sat.r + 2, -5, 10, 10);
       ctx.strokeRect(sat.r + 2, -5, 10, 10);
 
-      // Corpo do satélite
       ctx.fillStyle = '#0d1117';
       ctx.strokeStyle = '#ffd166';
       ctx.lineWidth = 2;
@@ -733,7 +885,6 @@
       ctx.fill();
       ctx.stroke();
 
-      // Sensor vermelho/alaranjado de ataque
       ctx.fillStyle = '#ff4d6d';
       ctx.beginPath();
       ctx.arc(0, 4, 4.5, 0, Math.PI * 2);
@@ -767,8 +918,8 @@
     function drawComet(c) {
       ctx.save();
       const tailGrad = ctx.createLinearGradient(c.x, c.y, c.x - c.vx * 18, c.y - c.r * 3.4);
-      tailGrad.addColorStop(0, 'rgba(0, 210, 255, 0.45)');
-      tailGrad.addColorStop(1, 'rgba(0, 210, 255, 0)');
+      tailGrad.addColorStop(0, c.color + '88');
+      tailGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = tailGrad;
       ctx.beginPath();
       ctx.moveTo(c.x - c.r * 0.85, c.y);
@@ -779,9 +930,11 @@
 
       ctx.translate(c.x, c.y);
       ctx.rotate(c.angle);
-      ctx.fillStyle = '#0d1117';
-      ctx.strokeStyle = '#00d2ff';
-      ctx.lineWidth = 2;
+      ctx.fillStyle = c.color + '33';
+      ctx.strokeStyle = c.color;
+      ctx.shadowColor = c.color;
+      ctx.shadowBlur = 8;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       const sides = 7;
       for (let i = 0; i < sides; i++) {
@@ -794,6 +947,13 @@
       }
       ctx.closePath();
       ctx.fill();
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(-c.r * 0.22, -c.r * 0.15, c.r * 0.28, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }
@@ -846,12 +1006,11 @@
 
       checkPlanetProgression(now);
 
+      const planet = PLANETS[state.planetIndex % PLANETS.length];
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
-      ctx.fillStyle = '#070b14';
-      ctx.fillRect(0, 0, w, h);
+      drawPlanetScenario(w, h, now, planet);
 
-      // Espaço cheio de estrelas bem coloridas
       for (const s of stars) {
         s.y += s.v + state.planetIndex * 0.35;
         if (s.y > h) {
@@ -879,7 +1038,6 @@
       spawnEnemyShip(now);
       spawnSatellite(now);
 
-      // Naves pequenas aliadas atirando sozinhas
       for (let i = wingmen.length - 1; i >= 0; i--) {
         const wg = wingmen[i];
         if (now > wg.expiresAt) {
@@ -908,7 +1066,6 @@
         drawWingman(wg);
       }
 
-      // Projéteis coloridos da nossa frota
       for (let i = bullets.length - 1; i >= 0; i--) {
         const b = bullets[i];
         b.x += b.vx;
@@ -931,7 +1088,29 @@
         if (b.y < -30) bullets.splice(i, 1);
       }
 
-      // Satélites atacando naves e trocando fogo com inimigos
+      for (let i = yellowLights.length - 1; i >= 0; i--) {
+        const light = yellowLights[i];
+        light.y += light.vy;
+        drawYellowLight(light, now);
+
+        const hitPlayer =
+          light.x + light.r > player.x &&
+          light.x - light.r < player.x + player.w &&
+          light.y + light.r > player.y &&
+          light.y - light.r < player.y + player.h;
+
+        if (hitPlayer) {
+          healPlayer(light.heal);
+          addEnergy(light.energy);
+          yellowLights.splice(i, 1);
+          continue;
+        }
+
+        if (light.y > h + 30) {
+          yellowLights.splice(i, 1);
+        }
+      }
+
       for (let i = satellites.length - 1; i >= 0; i--) {
         const sat = satellites[i];
         if (sat.y < sat.targetY) {
@@ -958,7 +1137,6 @@
             color: '#ffd166',
             dmg: 10 + state.planetIndex * 2
           });
-          // Satélite também atira em direção às naves inimigas na tela
           if (enemies.length > 0) {
             const targetEnemy = enemies[0];
             const ex = targetEnemy.x + targetEnemy.w / 2;
@@ -976,7 +1154,6 @@
 
         drawSatellite(sat);
 
-        // Tiros do jogador acertando satélite
         for (let j = bullets.length - 1; j >= 0; j--) {
           const b = bullets[j];
           const hitR = (b.radius || 4) + sat.r;
@@ -988,6 +1165,7 @@
             if (sat.hp <= 0) {
               state.score += 35;
               addEnergy(15);
+              spawnYellowLight(sat.x, sat.y);
               satellites.splice(i, 1);
               break;
             }
@@ -995,7 +1173,6 @@
         }
       }
 
-      // Naves inimigas atacando nossa nave e outras naves/satélites
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         if (e.y < e.targetY) {
@@ -1024,7 +1201,6 @@
           });
         }
 
-        // Nave inimiga colidindo/atacando outra nave inimiga ou satélite
         for (let k = enemies.length - 1; k >= 0; k--) {
           if (k === i) continue;
           const other = enemies[k];
@@ -1090,7 +1266,6 @@
         }
       }
 
-      // Tiros inimigos e de satélites
       for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const eb = enemyBullets[i];
         eb.x += eb.vx;
@@ -1121,7 +1296,6 @@
         if (eb.y > h + 30) enemyBullets.splice(i, 1);
       }
 
-      // Rochas / Cometas: cada rocha destruída dá energia extra
       for (let i = comets.length - 1; i >= 0; i--) {
         const c = comets[i];
         c.x += c.vx;
@@ -1147,6 +1321,7 @@
             if (c.hp <= 0) {
               state.score += 25;
               addEnergy(15);
+              spawnYellowLight(c.x, c.y);
               comets.splice(i, 1);
               break;
             }
@@ -1252,6 +1427,7 @@
       enemies = [];
       satellites = [];
       comets = [];
+      yellowLights = [];
       document.getElementById('gameOverModal').style.display = 'none';
       showCommanderAlert(PLANETS[0].alert);
       requestAnimationFrame(loop);
