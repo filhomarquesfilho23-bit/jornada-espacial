@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Central Arcade — Jogos Neon</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Central Neon Rally — Campanha 2H</title>
   <meta name="theme-color" content="#070b14" />
   <style>
     * {
@@ -12,129 +12,866 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    body {
+    html, body {
       margin: 0;
-      min-height: 100dvh;
-      background: radial-gradient(circle at top, #0d1629 0%, #070b14 75%);
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+      background: #070b14;
       color: #e6edf3;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    #gameWrapper {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      background: #070b14;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hud-top {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .hud-box {
+      background: rgba(13, 17, 23, 0.88);
+      border: 1px solid rgba(0, 210, 255, 0.45);
+      border-radius: 10px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.15);
+      pointer-events: auto;
+    }
+
+    .hud-box span {
+      color: #00ffff;
+    }
+
+    #aiToggleBtn {
+      background: #0d1117;
+      color: #00ffff;
+      border: 1.5px solid #00ffff;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(0, 255, 255, 0.25);
+    }
+
+    #aiToggleBtn.active {
+      background: #00ffff;
+      color: #070b14;
+      box-shadow: 0 0 16px rgba(0, 255, 255, 0.7);
+    }
+
+    #curveAlert {
+      position: absolute;
+      top: 54px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 17, 23, 0.9);
+      border: 1.5px solid #ffd166;
+      color: #ffd166;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 4px 14px;
+      border-radius: 999px;
+      letter-spacing: 0.8px;
+      z-index: 9;
+      display: none;
+      box-shadow: 0 0 14px rgba(255, 209, 102, 0.35);
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 62px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 12;
+      pointer-events: none;
+    }
+
+    .ctrl-group {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .ctrl-btn {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: rgba(13, 17, 23, 0.82);
+      border: 2px solid #00d2ff;
+      color: #00ffff;
+      font-size: 22px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 14px rgba(0, 210, 255, 0.28);
+      touch-action: manipulation;
+    }
+
+    .ctrl-btn:active {
+      background: rgba(0, 210, 255, 0.28);
+      transform: scale(0.95);
+    }
+
+    .ctrl-btn.nitro {
+      border-color: #ffd166;
+      color: #ffd166;
+      font-size: 13px;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 11, 20, 0.92);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-    }
-
-    .hub-card {
-      width: 100%;
-      max-width: 420px;
-      background: rgba(13, 17, 23, 0.92);
-      border: 1.5px solid rgba(0, 210, 255, 0.45);
-      border-radius: 16px;
-      padding: 24px 18px;
-      box-shadow: 0 0 28px rgba(0, 210, 255, 0.18);
+      padding: 18px;
+      z-index: 20;
       text-align: center;
     }
 
-    .badge {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      color: #070b14;
-      background: #00ffff;
-      padding: 4px 12px;
-      border-radius: 999px;
-      margin-bottom: 10px;
-      text-transform: uppercase;
+    .card {
+      width: 100%;
+      max-width: 400px;
+      background: #0d1117;
+      border: 1.5px solid #00d2ff;
+      border-radius: 16px;
+      padding: 20px 16px;
+      box-shadow: 0 0 28px rgba(0, 210, 255, 0.22);
     }
 
-    h1 {
+    .card h1 {
       margin: 0 0 6px;
-      font-size: 24px;
+      font-size: 22px;
       color: #00ffff;
-      text-shadow: 0 0 12px rgba(0, 255, 255, 0.45);
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
 
-    p {
-      margin: 0 0 22px;
-      font-size: 13.5px;
+    .card p {
+      margin: 0 0 14px;
+      font-size: 13px;
       color: #94a3b8;
     }
 
-    .game-list {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    .car-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
-    .game-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      text-decoration: none;
+    .car-option {
       background: #070b14;
-      border: 1.5px solid #00d2ff;
+      border: 1.5px solid #1e293b;
       border-radius: 12px;
-      padding: 15px 16px;
-      color: #e6edf3;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      padding: 10px 6px;
+      cursor: pointer;
     }
 
-    .game-btn:active {
-      transform: scale(0.98);
+    .car-option.selected {
+      border-color: #00ffff;
+      box-shadow: 0 0 14px rgba(0, 255, 255, 0.35);
     }
 
-    .game-btn.featured {
-      border-color: #ffd166;
-      box-shadow: 0 0 18px rgba(255, 209, 102, 0.22);
-    }
-
-    .game-tag {
-      font-size: 10px;
+    .car-num {
+      font-size: 18px;
       font-weight: 900;
       color: #ffd166;
-      text-transform: uppercase;
-      margin-bottom: 4px;
     }
 
-    .game-btn:not(.featured) .game-tag {
-      color: #00ffff;
+    .car-name {
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 3px;
+      color: #e6edf3;
     }
 
-    .game-title {
-      font-size: 17px;
+    .car-spec {
+      font-size: 10px;
+      color: #00d2ff;
+      margin-top: 2px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
       font-weight: 900;
-      color: #ffffff;
-      margin-bottom: 3px;
+      background: linear-gradient(90deg, #00d2ff, #00ffff);
+      color: #070b14;
+      cursor: pointer;
+      box-shadow: 0 0 16px rgba(0, 255, 255, 0.4);
     }
 
-    .game-desc {
-      font-size: 12px;
-      color: #94a3b8;
+    .ai-start-btn {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #ffd166;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 900;
+      background: #070b14;
+      color: #ffd166;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="hub-card">
-    <span class="badge">Central Arcade</span>
-    <h1>Escolha seu Jogo</h1>
-    <p>Toque abaixo para entrar direto na pista ou no espaço</p>
+  <div id="gameWrapper">
+    <canvas id="gameCanvas"></canvas>
 
-    <div class="game-list">
-      <a class="game-btn featured" href="./neon-do-sertao.html">
-        <span class="game-tag">Novo Lançamento • Campanha 2H + IA</span>
-        <span class="game-title">🏎️ Central Neon Rally</span>
-        <span class="game-desc">Carros #10, #23 e #77, modo Jogar com IA, rios, buracos e 4 etapas</span>
-      </a>
+    <div class="hud-top" id="hudTop" style="display:none;">
+      <div class="hud-box">
+        ETAPA <span id="stageNum">1/4</span> • <span id="stageName">SERTÃO NEON</span><br/>
+        TEMPO: <span id="campTimer">02:00:00</span> | KM: <span id="distKm">0.0</span>
+      </div>
+      <button id="aiToggleBtn">🤖 IA: OFF</button>
+      <div class="hud-box">
+        VEL: <span id="speedVal">0</span> KM/H<br/>
+        POS: <span id="posVal">1º</span> • PTS: <span id="scoreVal">0</span>
+      </div>
+    </div>
 
-      <a class="game-btn" href="https://filhomarquesfilho23-bit.github.io/jornada-espacial/">
-        <span class="game-tag">Ação Espacial • Piloto Automático</span>
-        <span class="game-title">🚀 Jornada Espacial</span>
-        <span class="game-desc">Escolha sua nave, enfrente chefes e explore planetas</span>
-      </a>
+    <div id="curveAlert">⚠️ CURVA ACENTUADA</div>
+
+    <div class="controls" id="touchControls" style="display:none;">
+      <div class="ctrl-group">
+        <button class="ctrl-btn" id="btnLeft">◀</button>
+        <button class="ctrl-btn" id="btnRight">▶</button>
+      </div>
+      <div class="ctrl-group">
+        <button class="ctrl-btn nitro" id="btnNitro">NITRO</button>
+        <button class="ctrl-btn" id="btnGas">▲</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="startOverlay">
+      <div class="card">
+        <h1>CENTRAL NEON RALLY</h1>
+        <p>Estrada com curvas sinuosas, rios, buracos, helicóptero e campanha de 2 horas</p>
+
+        <div class="car-grid" id="carGrid">
+          <div class="car-option selected" data-car="0">
+            <div class="car-num">#10</div>
+            <div class="car-name">FALCON CYAN</div>
+            <div class="car-spec">Curva Ágil</div>
+          </div>
+          <div class="car-option" data-car="1">
+            <div class="car-num">#23</div>
+            <div class="car-name">SERTÃO TURBO</div>
+            <div class="car-spec">Motor Forte</div>
+          </div>
+          <div class="car-option" data-car="2">
+            <div class="car-num">#77</div>
+            <div class="car-name">VIPER NEON</div>
+            <div class="car-spec">Nitro Rápido</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary-btn" id="startManualBtn">🏁 CORRER AGORA</button>
+          <button class="ai-start-btn" id="startAiBtn">🤖 JOGAR COM IA (PILOTO AUTOMÁTICO)</button>
+        </div>
+      </div>
     </div>
   </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const CARS = [
+      { num: '#10', name: 'FALCON CYAN', color: '#00ffff', accent: '#0077ff', maxSpd: 245, grip: 1.15 },
+      { num: '#23', name: 'SERTÃO TURBO', color: '#ffd166', accent: '#ff6b35', maxSpd: 260, grip: 1.0 },
+      { num: '#77', name: 'VIPER NEON', color: '#00ff9d', accent: '#00b4d8', maxSpd: 255, grip: 1.08 }
+    ];
+
+    const STAGES = [
+      { name: 'SERTÃO NEON', roadColor: '#111827', edgeColor: '#00ffff', groundColor: '#070b14' },
+      { name: 'VALE DO RIO', roadColor: '#0f172a', edgeColor: '#00d2ff', groundColor: '#06101c' },
+      { name: 'SERRA CURVADA', roadColor: '#161b26', edgeColor: '#ffd166', groundColor: '#090d16' },
+      { name: 'CANYON NOTURNO', roadColor: '#121520', edgeColor: '#ff4d6d', groundColor: '#070910' }
+    ];
+
+    let selectedCarIdx = 0;
+    let running = false;
+    let aiMode = false;
+
+    const state = {
+      distance: 0,
+      speed: 0,
+      playerOffset: 0, // -1 a +1 relativo ao centro da pista
+      score: 0,
+      campaignSeconds: 7200, // 2 horas
+      nitro: 100,
+      nitroActive: false,
+      shake: 0,
+      heliAngle: 0,
+      obstacles: [],
+      rivals: [],
+      rivers: [],
+      scenery: []
+    };
+
+    const keys = { left: false, right: false, gas: false, nitro: false };
+
+    // Seleção de carros
+    document.querySelectorAll('.car-option').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.car-option').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCarIdx = parseInt(el.dataset.car, 10);
+      });
+    });
+
+    // Controles touch e teclado
+    function bindHold(id, prop) {
+      const btn = document.getElementById(id);
+      const down = (e) => { e.preventDefault(); keys[prop] = true; };
+      const up = (e) => { e.preventDefault(); keys[prop] = false; };
+      btn.addEventListener('touchstart', down, { passive: false });
+      btn.addEventListener('touchend', up, { passive: false });
+      btn.addEventListener('mousedown', down);
+      btn.addEventListener('mouseup', up);
+      btn.addEventListener('mouseleave', up);
+    }
+
+    bindHold('btnLeft', 'left');
+    bindHold('btnRight', 'right');
+    bindHold('btnGas', 'gas');
+    bindHold('btnNitro', 'nitro');
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+      if (e.key === 'ArrowUp' || e.key === 'w') keys.gas = true;
+      if (e.key === ' ' || e.key === 'Shift') keys.nitro = true;
+    });
+
+    window.addEventListener('keyup', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+      if (e.key === 'ArrowUp' || e.key === 'w') keys.gas = false;
+      if (e.key === ' ' || e.key === 'Shift') keys.nitro = false;
+    });
+
+    const aiBtn = document.getElementById('aiToggleBtn');
+    function updateAiButton() {
+      aiBtn.textContent = aiMode ? '🤖 IA: ON' : '🤖 IA: OFF';
+      aiBtn.classList.toggle('active', aiMode);
+    }
+    aiBtn.addEventListener('click', () => {
+      aiMode = !aiMode;
+      updateAiButton();
+    });
+
+    function startGame(withAi) {
+      aiMode = withAi;
+      updateAiButton();
+      document.getElementById('startOverlay').style.display = 'none';
+      document.getElementById('hudTop').style.display = 'flex';
+      document.getElementById('touchControls').style.display = 'flex';
+
+      state.distance = 0;
+      state.speed = 90;
+      state.playerOffset = 0;
+      state.score = 0;
+      state.campaignSeconds = 7200;
+      state.nitro = 100;
+      state.obstacles = [];
+      state.rivers = [];
+      state.rivals = [
+        { num: '#05', color: '#ff4d6d', dist: 180, offset: -0.45, spd: 185 },
+        { num: '#14', color: '#a855f7', dist: 360, offset: 0.42, spd: 195 },
+        { num: '#88', color: '#38bdf8', dist: 540, offset: -0.15, spd: 205 }
+      ];
+
+      for (let i = 0; i < 18; i++) {
+        state.scenery.push({
+          dist: i * 110,
+          side: i % 2 === 0 ? -1 : 1,
+          type: i % 3 === 0 ? 'cactus' : (i % 3 === 1 ? 'post' : 'rock')
+        });
+      }
+
+      running = true;
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById('startManualBtn').addEventListener('click', () => startGame(false));
+    document.getElementById('startAiBtn').addEventListener('click', () => startGame(true));
+
+    // Função matemática da curva contínua da estrada ao longo da distância Z
+    function getRoadCenterX(worldZ, screenW) {
+      const wave1 = Math.sin(worldZ * 0.0022) * (screenW * 0.24);
+      const wave2 = Math.sin(worldZ * 0.0053 + 1.2) * (screenW * 0.13);
+      const wave3 = Math.cos(worldZ * 0.0011) * (screenW * 0.08);
+      return screenW * 0.5 + wave1 + wave2 + wave3;
+    }
+
+    // Derivada (inclinação da curva) para empurrar o carro naturalmente nas curvas e mostrar alerta
+    function getRoadCurveSlope(worldZ) {
+      return (
+        Math.cos(worldZ * 0.0022) * 0.24 * 2.2 +
+        Math.cos(worldZ * 0.0053 + 1.2) * 0.13 * 5.3 -
+        Math.sin(worldZ * 0.0011) * 0.08 * 1.1
+      );
+    }
+
+    function formatTime(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const h = String(Math.floor(s / 3600)).padStart(2, '0');
+      const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+      const r = String(s % 60).padStart(2, '0');
+      return `${h}:${m}:${r}`;
+    }
+
+    let lastTime = 0;
+    let spawnTimer = 0;
+    let riverTimer = 0;
+
+    function update(dt) {
+      const car = CARS[selectedCarIdx];
+      state.campaignSeconds = Math.max(0, state.campaignSeconds - dt);
+
+      // Controle da IA (Piloto Automático inteligente nas curvas e desvios)
+      let steer = 0;
+      let wantGas = keys.gas;
+      let wantNitro = keys.nitro;
+
+      if (aiMode) {
+        wantGas = true;
+        let targetOffset = 0;
+
+        // Procura obstáculo próximo na frente para desviar
+        for (const obs of state.obstacles) {
+          const dz = obs.dist - state.distance;
+          if (dz > 20 && dz < 260 && Math.abs(obs.offset - state.playerOffset) < 0.42) {
+            targetOffset = obs.offset > 0 ? -0.52 : 0.52;
+            break;
+          }
+        }
+
+        // Antecipa curva acentuada pegando o lado interno
+        const aheadSlope = getRoadCurveSlope(state.distance + 180);
+        if (Math.abs(aheadSlope) > 0.65 && targetOffset === 0) {
+          targetOffset = aheadSlope > 0 ? 0.25 : -0.25;
+        }
+
+        const diff = targetOffset - state.playerOffset;
+        if (Math.abs(diff) > 0.03) {
+          steer = Math.sign(diff) * Math.min(1, Math.abs(diff) * 4);
+        }
+
+        wantNitro = state.nitro > 65 && Math.abs(aheadSlope) < 0.55;
+      } else {
+        if (keys.left) steer -= 1;
+        if (keys.right) steer += 1;
+      }
+
+      // Nitro
+      if (wantNitro && state.nitro > 5 && state.speed > 80) {
+        state.nitroActive = true;
+        state.nitro = Math.max(0, state.nitro - 28 * dt);
+      } else {
+        state.nitroActive = false;
+        state.nitro = Math.min(100, state.nitro + 11 * dt);
+      }
+
+      // Aceleração e velocidade
+      const topSpeed = car.maxSpd + (state.nitroActive ? 55 : 0);
+      if (wantGas || aiMode) {
+        state.speed += (state.nitroActive ? 140 : 85) * dt;
+      } else {
+        state.speed -= 55 * dt;
+      }
+
+      // Penalidade se sair para a terra fora da estrada
+      if (Math.abs(state.playerOffset) > 0.96) {
+        state.speed -= 130 * dt;
+        state.shake = 3;
+      }
+
+      state.speed = Math.max(45, Math.min(topSpeed, state.speed));
+      const worldStep = state.speed * 2.1 * dt;
+      state.distance += worldStep;
+      state.score += Math.floor(worldStep * 0.25);
+
+      // Força centrífuga da curva puxando o carro para fora da curva
+      const currentSlope = getRoadCurveSlope(state.distance + 90);
+      const curvePull = currentSlope * (state.speed / 240) * 0.42 * dt;
+      state.playerOffset += (steer * 1.45 * car.grip * dt) - curvePull;
+      state.playerOffset = Math.max(-1.25, Math.min(1.25, state.playerOffset));
+
+      // Alerta visual de curva forte à frente
+      const nextSlope = getRoadCurveSlope(state.distance + 260);
+      const curveAlert = document.getElementById('curveAlert');
+      if (Math.abs(nextSlope) > 0.62) {
+        curveAlert.style.display = 'block';
+        curveAlert.textContent = nextSlope > 0 ? '↪️ CURVA FECHADA À DIREITA' : '↩️ CURVA FECHADA À ESQUERDA';
+      } else {
+        curveAlert.style.display = 'none';
+      }
+
+      // Gera buracos e pedras na pista
+      spawnTimer += dt;
+      if (spawnTimer > 1.35) {
+        spawnTimer = 0;
+        state.obstacles.push({
+          dist: state.distance + 950,
+          offset: (Math.random() * 1.3) - 0.65,
+          type: Math.random() > 0.35 ? 'pothole' : 'cone'
+        });
+      }
+
+      // Gera rios com ponte atravessando a estrada
+      riverTimer += dt;
+      if (riverTimer > 8.5) {
+        riverTimer = 0;
+        state.rivers.push({
+          dist: state.distance + 1100,
+          width: 95
+        });
+      }
+
+      // Colisão com buracos
+      for (let i = state.obstacles.length - 1; i >= 0; i--) {
+        const obs = state.obstacles[i];
+        const dz = obs.dist - state.distance;
+        if (Math.abs(dz) < 26 && Math.abs(obs.offset - state.playerOffset) < 0.22) {
+          state.speed = Math.max(55, state.speed * 0.62);
+          state.shake = 8;
+          state.obstacles.splice(i, 1);
+          continue;
+        }
+        if (dz < -120) state.obstacles.splice(i, 1);
+      }
+
+      // Atualiza rios
+      for (let i = state.rivers.length - 1; i >= 0; i--) {
+        if (state.rivers[i].dist - state.distance < -160) {
+          state.rivers.splice(i, 1);
+        }
+      }
+
+      // Atualiza carros rivais acompanhando as curvas
+      let rank = 1;
+      for (const r of state.rivals) {
+        r.dist += r.spd * 2.05 * dt;
+        if (r.dist < state.distance - 260) {
+          r.dist = state.distance + 780 + Math.random() * 250;
+          r.offset = (Math.random() * 1.2) - 0.6;
+        }
+        if (r.dist > state.distance) rank++;
+      }
+
+      // Atualiza vegetação/postes laterais
+      for (const sc of state.scenery) {
+        if (sc.dist < state.distance - 100) {
+          sc.dist += 18 * 110;
+        }
+      }
+
+      state.heliAngle += dt * 1.8;
+      if (state.shake > 0) state.shake = Math.max(0, state.shake - 25 * dt);
+
+      // Atualiza HUD
+      const stageIdx = Math.floor((state.distance / 5000) % STAGES.length);
+      document.getElementById('stageNum').textContent = `${stageIdx + 1}/4`;
+      document.getElementById('stageName').textContent = STAGES[stageIdx].name;
+      document.getElementById('campTimer').textContent = formatTime(state.campaignSeconds);
+      document.getElementById('distKm').textContent = (state.distance / 1000).toFixed(1);
+      document.getElementById('speedVal').textContent = Math.round(state.speed);
+      document.getElementById('posVal').textContent = `${rank}º`;
+      document.getElementById('scoreVal').textContent = state.score;
+    }
+
+    function drawCar(x, y, w, h, color, accent, num, isPlayer) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Sombra
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.beginPath();
+      ctx.roundRect(-w * 0.52, -h * 0.45, w * 1.04, h * 0.96, 8);
+      ctx.fill();
+
+      // Pneus
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(-w * 0.56, -h * 0.34, 6, 14);
+      ctx.fillRect(w * 0.56 - 6, -h * 0.34, 6, 14);
+      ctx.fillRect(-w * 0.56, h * 0.16, 6, 15);
+      ctx.fillRect(w * 0.56 - 6, h * 0.16, 6, 15);
+
+      // Carroceria
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(-w * 0.46, -h * 0.48, w * 0.92, h * 0.96, 9);
+      ctx.fill();
+
+      // Faixa central
+      ctx.fillStyle = accent;
+      ctx.fillRect(-w * 0.16, -h * 0.45, w * 0.32, h * 0.9);
+
+      // Para-brisa
+      ctx.fillStyle = '#070b14';
+      ctx.beginPath();
+      ctx.roundRect(-w * 0.34, -h * 0.24, w * 0.68, h * 0.24, 4);
+      ctx.fill();
+
+      // Faróis neon
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+      ctx.fillRect(-w * 0.36, -h * 0.49, 8, 4);
+      ctx.fillRect(w * 0.36 - 8, -h * 0.49, 8, 4);
+      ctx.shadowBlur = 0;
+
+      // Chama do nitro
+      if (isPlayer && state.nitroActive) {
+        ctx.fillStyle = '#ffd166';
+        ctx.beginPath();
+        ctx.moveTo(-7, h * 0.48);
+        ctx.lineTo(0, h * 0.48 + 16 + Math.random() * 8);
+        ctx.lineTo(7, h * 0.48);
+        ctx.fill();
+      }
+
+      // Número do carro
+      ctx.fillStyle = '#070b14';
+      ctx.font = '900 10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(num, 0, h * 0.22);
+
+      ctx.restore();
+    }
+
+    function render() {
+      const W = canvas.width;
+      const H = canvas.height;
+      const stageIdx = Math.floor((state.distance / 5000) % STAGES.length);
+      const stage = STAGES[stageIdx];
+
+      ctx.save();
+      if (state.shake > 0) {
+        ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+      }
+
+      // Fundo do terreno
+      ctx.fillStyle = stage.groundColor;
+      ctx.fillRect(0, 0, W, H);
+
+      const roadHalfBase = Math.min(W * 0.36, 175);
+      const playerScreenY = H * 0.74;
+      const stepY = 12;
+
+      // Desenha a estrada em faixas horizontais para formar curvas suaves e contínuas
+      for (let y = 0; y < H + stepY; y += stepY) {
+        const distAhead = (playerScreenY - y) * 1.35;
+        const worldZ = state.distance + distAhead;
+        const perspective = 0.62 + (y / H) * 0.52;
+        const halfW = roadHalfBase * perspective;
+        const centerX = getRoadCenterX(worldZ, W);
+
+        // Acostamento / borda neon
+        ctx.fillStyle = Math.floor(worldZ / 35) % 2 === 0 ? stage.edgeColor : '#1e293b';
+        ctx.fillRect(centerX - halfW - 6 * perspective, y, (halfW + 6 * perspective) * 2, stepY + 1);
+
+        // Asfalto / terra batida
+        ctx.fillStyle = stage.roadColor;
+        ctx.fillRect(centerX - halfW, y, halfW * 2, stepY + 1);
+
+        // Faixa central tracejada acompanhando a curva
+        if (Math.floor(worldZ / 45) % 2 === 0) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.fillRect(centerX - 2.5 * perspective, y, 5 * perspective, stepY + 1);
+        }
+      }
+
+      // Desenha rios e pontes acompanhando a curva da pista
+      for (const river of state.rivers) {
+        const dz = river.dist - state.distance;
+        const y = playerScreenY - dz / 1.35;
+        if (y > -80 && y < H + 80) {
+          const perspective = 0.62 + (y / H) * 0.52;
+          const halfW = roadHalfBase * perspective;
+          const centerX = getRoadCenterX(river.dist, W);
+
+          // Água do rio atravessando toda a tela
+          ctx.fillStyle = '#0284c7';
+          ctx.fillRect(0, y - 24 * perspective, W, 48 * perspective);
+
+          // Brilho da água
+          ctx.fillStyle = 'rgba(0, 255, 255, 0.35)';
+          ctx.fillRect(0, y - 4 * perspective, W, 6 * perspective);
+
+          // Ponte sobre o rio alinhada com a estrada curva
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(centerX - halfW - 4, y - 26 * perspective, (halfW + 4) * 2, 52 * perspective);
+          ctx.strokeStyle = '#ffd166';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(centerX - halfW - 4, y - 26 * perspective, (halfW + 4) * 2, 52 * perspective);
+        }
+      }
+
+      // Desenha postes neon e cactos nas margens acompanhando a curva
+      for (const sc of state.scenery) {
+        const dz = sc.dist - state.distance;
+        const y = playerScreenY - dz / 1.35;
+        if (y > -40 && y < H + 40) {
+          const perspective = 0.62 + (y / H) * 0.52;
+          const halfW = roadHalfBase * perspective;
+          const centerX = getRoadCenterX(sc.dist, W);
+          const sx = centerX + sc.side * (halfW + 34 * perspective);
+
+          if (sc.type === 'post') {
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(sx - 2, y - 24 * perspective, 4, 24 * perspective);
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath();
+            ctx.arc(sx, y - 25 * perspective, 4 * perspective, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (sc.type === 'cactus') {
+            ctx.fillStyle = '#10b981';
+            ctx.fillRect(sx - 4 * perspective, y - 22 * perspective, 8 * perspective, 22 * perspective);
+            ctx.fillRect(sx - 10 * perspective, y - 16 * perspective, 20 * perspective, 5 * perspective);
+          } else {
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(sx, y - 6 * perspective, 10 * perspective, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // Desenha buracos e cones na pista curva
+      for (const obs of state.obstacles) {
+        const dz = obs.dist - state.distance;
+        const y = playerScreenY - dz / 1.35;
+        if (y > -30 && y < H + 30) {
+          const perspective = 0.62 + (y / H) * 0.52;
+          const halfW = roadHalfBase * perspective;
+          const centerX = getRoadCenterX(obs.dist, W);
+          const ox = centerX + obs.offset * halfW;
+
+          if (obs.type === 'pothole') {
+            ctx.fillStyle = '#030712';
+            ctx.beginPath();
+            ctx.ellipse(ox, y, 16 * perspective, 9 * perspective, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ff4d6d';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.moveTo(ox, y - 12 * perspective);
+            ctx.lineTo(ox - 8 * perspective, y + 6 * perspective);
+            ctx.lineTo(ox + 8 * perspective, y + 6 * perspective);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+      }
+
+      // Desenha carros rivais posicionados dentro da curva
+      for (const r of state.rivals) {
+        const dz = r.dist - state.distance;
+        const y = playerScreenY - dz / 1.35;
+        if (y > -60 && y < H + 60) {
+          const perspective = 0.62 + (y / H) * 0.52;
+          const halfW = roadHalfBase * perspective;
+          const centerX = getRoadCenterX(r.dist, W);
+          const rx = centerX + r.offset * halfW;
+          drawCar(rx, y, 36 * perspective, 62 * perspective, r.color, '#0f172a', r.num, false);
+        }
+      }
+
+      // Desenha carro do jogador alinhado à curva atual
+      const playerCar = CARS[selectedCarIdx];
+      const playerPerspective = 0.62 + (playerScreenY / H) * 0.52;
+      const playerRoadCenter = getRoadCenterX(state.distance, W);
+      const playerX = playerRoadCenter + state.playerOffset * (roadHalfBase * playerPerspective);
+      drawCar(playerX, playerScreenY, 38, 66, playerCar.color, playerCar.accent, playerCar.num, true);
+
+      // Helicóptero de transmissão sobrevoando a pista
+      const heliX = W * 0.5 + Math.cos(state.heliAngle * 0.7) * (W * 0.28);
+      const heliY = 98 + Math.sin(state.heliAngle) * 14;
+      ctx.save();
+      ctx.translate(heliX, heliY);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-26, -2, 14, 4);
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.75)';
+      ctx.lineWidth = 2;
+      const rotorSpan = Math.sin(state.heliAngle * 14) * 26;
+      ctx.beginPath();
+      ctx.moveTo(-rotorSpan, -6);
+      ctx.lineTo(rotorSpan, -6);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function loop(now) {
+      if (!running) return;
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+
+      update(dt);
+      render();
+      requestAnimationFrame(loop);
+    }
+  </script>
 
   <script data-cfasync="false" src="https://bauval.org/14/5a88615d312cfa2c58147e4b60125525"></script>
 </body>
