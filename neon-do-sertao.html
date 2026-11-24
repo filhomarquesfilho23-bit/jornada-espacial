@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Central Neon Rally — Campanha 2H</title>
+  <meta name="theme-color" content="#070b14">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+      background: #070b14;
+      color: #e6edf3;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    #gameWrapper {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      background: #070b14;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hud-top {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 6px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .bars-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 122px;
+      background: rgba(13, 17, 23, 0.86);
+      border: 1px solid rgba(0, 210, 255, 0.38);
+      border-radius: 8px;
+      padding: 5px 7px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      font-weight: 800;
+      color: #7dd3fc;
+    }
+
+    .bar-label {
+      width: 44px;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 6px;
+      background: #070b14;
+      border: 1px solid rgba(0, 210, 255, 0.35);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00d2ff, #00ffff);
+      transition: width 0.1s linear;
+    }
+
+    .bar-fill.turbo {
+      background: linear-gradient(90deg, #f59e0b, #ffd166);
+    }
+
+    .bar-val {
+      font-size: 9px;
+      color: #00ffff;
+      min-width: 26px;
+      text-align: right;
+    }
+
+    .stats-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #00ffff;
+      background: rgba(13, 17, 23, 0.86);
+      border: 1px solid rgba(0, 210, 255, 0.38);
+      border-radius: 8px;
+      padding: 5px 7px;
+    }
+
+    .stage-tag {
+      color: #ffd166;
+      font-size: 10px;
+    }
+
+    #radioAlert {
+      position: absolute;
+      top: 76px;
+      left: 10px;
+      right: 102px;
+      background: rgba(13, 17, 23, 0.94);
+      border-left: 3px solid #ffd166;
+      border-top: 1px solid rgba(0, 210, 255, 0.4);
+      border-right: 1px solid rgba(0, 210, 255, 0.4);
+      border-bottom: 1px solid rgba(0, 210, 255, 0.4);
+      border-radius: 8px;
+      padding: 6px 9px;
+      z-index: 22;
+      display: none;
+      pointer-events: none;
+    }
+
+    .radio-title {
+      font-size: 9px;
+      font-weight: 900;
+      color: #ffd166;
+      text-transform: uppercase;
+    }
+
+    .radio-msg {
+      font-size: 11px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .side-dock {
+      position: absolute;
+      top: 8px;
+      right: 6px;
+      bottom: 124px;
+      width: 88px;
+      background: rgba(13, 17, 23, 0.93);
+      border: 1px solid rgba(0, 210, 255, 0.38);
+      border-radius: 10px;
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 15;
+      overflow-y: auto;
+    }
+
+    .dock-title {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #00d2ff;
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .dock-btn {
+      background: #070b14;
+      border: 1px solid rgba(0, 210, 255, 0.28);
+      color: #e6edf3;
+      border-radius: 6px;
+      padding: 5px 3px;
+      font-size: 9px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .dock-btn.active {
+      border-color: #00ffff;
+      background: rgba(0, 210, 255, 0.22);
+      color: #00ffff;
+    }
+
+    .dock-btn.ai-btn {
+      border-color: #ffd166;
+      color: #ffd166;
+      padding: 7px 3px;
+    }
+
+    .dock-btn.ai-btn.active {
+      background: #ffd166;
+      color: #070b14;
+      box-shadow: 0 0 12px rgba(255, 209, 102, 0.55);
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(0, 210, 255, 0.22);
+      margin: 2px 0;
+    }
+
+    .controls-bottom {
+      position: absolute;
+      bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .move-group {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .pad-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 210, 255, 0.6);
+      background: rgba(13, 17, 23, 0.92);
+      color: #00ffff;
+      font-size: 20px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .pulse-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 1.5px solid #00d2ff;
+      background: rgba(13, 27, 42, 0.94);
+      color: #00ffff;
+      font-size: 10px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
+    }
+
+    .turbo-orb {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid #00ffff;
+      background: radial-gradient(circle, rgba(0, 210, 255, 0.35) 0%, rgba(7, 11, 20, 0.96) 75%);
+      color: #ffd166;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(0, 210, 255, 0.6);
+    }
+
+    .turbo-orb:disabled {
+      opacity: 0.45;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .turbo-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .turbo-txt {
+      font-size: 8px;
+      font-weight: 900;
+      color: #e6edf3;
+      margin-top: 2px;
+    }
+
+    #gameOverModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 11, 20, 0.94);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: 20px;
+      text-align: center;
+    }
+
+    #gameOverModal h2 {
+      color: #00ffff;
+      margin: 0 0 8px;
+    }
+
+    #gameOverModal p {
+      margin: 0 0 18px;
+      color: #e6edf3;
+      font-size: 14px;
+    }
+
+    #restartBtn {
+      padding: 11px 24px;
+      border-radius: 8px;
+      border: 1px solid #00ffff;
+      background: #00d2ff;
+      color: #070b14;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="gameWrapper">
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="hud-top">
+      <div class="bars-box">
+        <div class="bar-row">
+          <span class="bar-label">LATARIA</span>
+          <div class="bar-track"><div class="bar-fill" id="barHealth" style="width:100%"></div></div>
+          <span class="bar-val" id="valHealth">100%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">NITRO</span>
+          <div class="bar-track"><div class="bar-fill turbo" id="barNitro" style="width:100%"></div></div>
+          <span class="bar-val" id="valNitro">100%</span>
+        </div>
+      </div>
+
+      <div class="stats-box">
+        <span class="stage-tag" id="hudStage">ETAPA 1/4: DUNAS (20m)</span>
+        <span id="hudTimer">TEMPO: 00:00 / 02:00:00</span>
+        <span id="hudScore">VEL: 215 KM/H | 0m</span>
+      </div>
+    </div>
+
+    <div id="radioAlert">
+      <div class="radio-title">Rádio do Piloto</div>
+      <div class="radio-msg" id="radioText"></div>
+    </div>
+
+    <aside class="side-dock">
+      <div class="dock-title">Garagem</div>
+      <button class="dock-btn active" data-car="vortex">#10 Vortex<br>Ciano</button>
+      <button class="dock-btn" data-car="spectre">#23 Spectre<br>Dourado</button>
+      <button class="dock-btn" data-car="colossus">#77 Colossus<br>Verde</button>
+
+      <div class="divider"></div>
+
+      <div class="dock-title">Piloto</div>
+      <button class="dock-btn ai-btn" id="btnAi">JOGAR<br>COM IA</button>
+      <button class="dock-btn active" id="btnSound">SOM<br>ON</button>
+    </aside>
+
+    <div class="controls-bottom">
+      <div class="move-group">
+        <button class="pad-btn" id="btnLeft">◀</button>
+        <button class="pad-btn" id="btnRight">▶</button>
+      </div>
+
+      <div class="action-group">
+        <button class="pulse-btn" id="btnShot">PULSO</button>
+        <button class="turbo-orb" id="btnTurbo">
+          <span class="turbo-icon">⚡</span>
+          <span class="turbo-txt" id="turboLabel">TURBO</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameOverModal">
+    <h2 id="modalTitle">Rally Encerrado!</h2>
+    <p id="finalStats">Distância percorrida: 0m</p>
+    <button id="restartBtn">Correr Novamente</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const MAX_RALLY_CARS = 20;
+    const TOTAL_CAMPAIGN_SEC = 120 * 60;
+
+    const STAGES = [
+      { name: 'ETAPA 1/4: DUNAS', durationSec: 20 * 60, endSec: 20 * 60, sand: '#1f160c', stripe: '#00ffff' },
+      { name: 'ETAPA 2/4: RIOS', durationSec: 25 * 60, endSec: 45 * 60, sand: '#0d2129', stripe: '#00d2ff' },
+      { name: 'ETAPA 3/4: TEMPESTADE', durationSec: 35 * 60, endSec: 80 * 60, sand: '#29170b', stripe: '#ffd166' },
+      { name: 'ETAPA 4/4: ARENA FINAL', durationSec: 40 * 60, endSec: 120 * 60, sand: '#1b0d18', stripe: '#10b981' }
+    ];
+
+    const CARS = {
+      vortex: { num: '10', name: 'Vortex Duna', speed: 11.4, maxHp: 100, body: '#00ffff', accent: '#ffffff', w: 40, h: 66 },
+      spectre: { num: '23', name: 'Spectre V8', speed: 12.2, maxHp: 95, body: '#ffd166', accent: '#00ffff', w: 40, h: 68 },
+      colossus: { num: '77', name: 'Colossus 4x4', speed: 10.2, maxHp: 150, body: '#10b981', accent: '#ffd166', w: 46, h: 72 }
+    };
+
+    const RIVAL_PALETTE = [
+      { color: '#ff4d6d', num: '02' }, { color: '#38bdf8', num: '05' },
+      { color: '#c084fc', num: '08' }, { color: '#fb923c', num: '14' },
+      { color: '#f472b6', num: '19' }, { color: '#a3e635', num: '27' },
+      { color: '#22d3ee', num: '33' }, { color: '#facc15', num: '44' },
+      { color: '#f87171', num: '51' }, { color: '#60a5fa', num: '88' }
+    ];
+
+    let state = {
+      running: true,
+      aiMode: false,
+      soundOn: true,
+      carKey: 'vortex',
+      hp: 100,
+      nitro: 100,
+      turboActiveUntil: 0,
+      airborneUntil: 0,
+      lastShotAt: 0,
+      distance: 0,
+      stageIndex: 0,
+      elapsedSec: 0,
+      lastTickAt: performance.now(),
+      baseSpeed: 10.4,
+      roadOffset: 0,
+      lastSpawn: 0,
+      lastRiver: 0,
+      lastRamp: 0,
+      lastItem: 0,
+      dustStormUntil: 0,
+      nextDustCheckAt: 4200,
+      radioTimer: null,
+      lastVoiceAt: 0
+    };
+
+    const player = { x: 140, y: 420, w: 40, h: 66 };
+    const input = { left: false, right: false };
+
+    let rallyCars = [];
+    let holes = [];
+    let rivers = [];
+    let ramps = [];
+    let items = [];
+    let shots = [];
+    let dustClouds = [];
+    let sandProps = [];
+    let heli = { x: 120, y: 95, vx: 2.6, rotorAngle: 0 };
+    let audioCtx = null;
+
+    function formatTime(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds));
+      const hrs = Math.floor(s / 3600);
+      const mins = Math.floor((s % 3600) / 60);
+      const secs = s % 60;
+      const pad = (n) => String(n).padStart(2, '0');
+      return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
+    }
+
+    function speakAndShow(message) {
+      const box = document.getElementById('radioAlert');
+      const txt = document.getElementById('radioText');
+      txt.textContent = message;
+      box.style.display = 'block';
+
+      clearTimeout(state.radioTimer);
+      state.radioTimer = setTimeout(() => {
+        box.style.display = 'none';
+      }, 2600);
+
+      const now = performance.now();
+      if (state.soundOn && 'speechSynthesis' in window && now - state.lastVoiceAt > 2400) {
+        state.lastVoiceAt = now;
+        try {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(message);
+          utter.lang = 'pt-BR';
+          utter.rate = 1.15;
+          window.speechSynthesis.speak(utter);
+        } catch (_) {}
+      }
+    }
+
+    function playFx(type) {
+      if (!state.soundOn) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioCtx) audioCtx = new AudioCtx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        if (type === 'turbo') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(170, now);
+          osc.frequency.exponentialRampToValueAtTime(640, now + 0.22);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.23);
+        } else if (type === 'shot') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(720, now);
+          osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        } else if (type === 'pickup') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(540, now);
+          osc.frequency.exponentialRampToValueAtTime(1020, now + 0.11);
+          gain.gain.setValueAtTime(0.07, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        } else {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.exponentialRampToValueAtTime(52, now + 0.16);
+          gain.gain.setValueAtTime(0.09, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+        }
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.24);
+      } catch (_) {}
+    }
+
+    function getRoadBounds() {
+      const w = canvas.clientWidth;
+      const playW = Math.max(w - 96, 210);
+      const roadW = Math.min(playW - 24, 316);
+      const left = Math.max(12, (playW - roadW) / 2);
+      return { left, right: left + roadW, width: roadW };
+    }
+
+    function resizeCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(canvas.clientWidth * dpr);
+      canvas.height = Math.floor(canvas.clientHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const road = getRoadBounds();
+      player.y = canvas.clientHeight - 166;
+      player.x = Math.min(Math.max(player.x, road.left + 8), road.right - player.w - 8);
+    }
+
+    function initSandProps() {
+      sandProps = Array.from({ length: 24 }, () => ({
+        x: Math.random() * canvas.clientWidth,
+        y: Math.random() * canvas.clientHeight,
+        kind: Math.random() < 0.5 ? 'cactus' : 'rock'
+      }));
+    }
+
+    function firePulse(now) {
+      if (!state.running || now - state.lastShotAt < 230) return;
+      state.lastShotAt = now;
+      playFx('shot');
+      shots.push({
+        x: player.x + player.w / 2,
+        y: player.y - 6,
+        vy: -15,
+        r: 5
+      });
+    }
+
+    function activateTurbo(now) {
+      if (!state.running || state.nitro < 30 || now < state.turboActiveUntil) return;
+      state.nitro = Math.max(0, state.nitro - 40);
+      state.turboActiveUntil = now + 2600;
+      firePulse(now);
+      playFx('turbo');
+      speakAndShow('Turbo ligado na pista!');
+    }
+
+    function spawnDustBurst(x, y, dense = false) {
+      const count = dense ? 4 : 2;
+      for (let i = 0; i < count; i++) {
+        dustClouds.push({
+          x: x + (Math.random() - 0.5) * (dense ? 52 : 20),
+          y: y + (Math.random() - 0.5) * (dense ? 36 : 12),
+          vx: (Math.random() - 0.5) * (dense ? 3.2 : 1.8),
+          vy: Math.random() * 2.5 + 1.5,
+          r: dense ? Math.random() * 14 + 9 : Math.random() * 6 + 3,
+          alpha: dense ? 0.36 : 0.24
+        });
+      }
+    }
+
+    function drawTrackAndRivers(w, h, speed, stage) {
+      ctx.fillStyle = stage.sand;
+      ctx.fillRect(0, 0, w, h);
+
+      const road = getRoadBounds();
+
+      for (let i = rivers.length - 1; i >= 0; i--) {
+        const rv = rivers[i];
+        rv.y += speed;
+
+        const riverGrad = ctx.createLinearGradient(0, rv.y, 0, rv.y + rv.h);
+        riverGrad.addColorStop(0, 'rgba(0, 210, 255, 0.35)');
+        riverGrad.addColorStop(0.5, 'rgba(14, 165, 233, 0.65)');
+        riverGrad.addColorStop(1, 'rgba(0, 255, 255, 0.35)');
+        ctx.fillStyle = riverGrad;
+        ctx.fillRect(0, rv.y, w - 92, rv.h);
+
+        ctx.strokeStyle = 'rgba(224, 242, 254, 0.65)';
+        ctx.lineWidth = 2;
+        for (let wy = rv.y + 10; wy < rv.y + rv.h - 6; wy += 14) {
+          ctx.beginPath();
+          ctx.moveTo(road.left + 8, wy);
+          ctx.lineTo(road.right - 8, wy + Math.sin(wy * 0.1 + state.roadOffset * 0.05) * 4);
+          ctx.stroke();
+        }
+
+        if (rv.y > h + 80) rivers.splice(i, 1);
+      }
+
+      for (const sp of sandProps) {
+        sp.y += speed * 0.9;
+        if (sp.y > h + 25) {
+          sp.y = -25;
+          sp.x = Math.random() * (w - 96);
+        }
+        if (sp.x > road.left - 16 && sp.x < road.right + 16) continue;
+
+        if (sp.kind === 'cactus') {
+          ctx.fillStyle = '#15803d';
+          ctx.fillRect(sp.x - 3, sp.y - 12, 6, 20);
+          ctx.fillRect(sp.x - 8, sp.y - 6, 5, 3);
+          ctx.fillRect(sp.x + 3, sp.y - 8, 5, 3);
+        } else {
+          ctx.fillStyle = '#5c4028';
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.fillStyle = 'rgba(17, 22, 34, 0.9)';
+      ctx.fillRect(road.left, 0, road.width, h);
+
+      ctx.strokeStyle = stage.stripe;
+      ctx.shadowColor = stage.stripe;
+      ctx.shadowBlur = 8;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(road.left, 0);
+      ctx.lineTo(road.left, h);
+      ctx.moveTo(road.right, 0);
+      ctx.lineTo(road.right, h);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = 'rgba(255, 209, 102, 0.55)';
+      const lane1 = road.left + road.width / 3;
+      const lane2 = road.left + (road.width * 2) / 3;
+      const dash = 46;
+      const startY = (state.roadOffset % dash) - dash;
+      for (let y = startY; y < h; y += dash) {
+        ctx.fillRect(lane1 - 2, y, 4, 24);
+        ctx.fillRect(lane2 - 2, y, 4, 24);
+      }
+    }
+
+    function drawRallyCar(x, y, w, h, bodyColor, accentColor, carNumber, isTurbo = false, isAirborne = false) {
+      const scale = isAirborne ? 1.15 : 1;
+      const dw = w * scale;
+      const dh = h * scale;
+      const dx = x - (dw - w) / 2;
+      const dy = y - (dh - h) / 2 - (isAirborne ? 11 : 0);
+
+      ctx.save();
+      ctx.shadowColor = isAirborne ? '#00ffff' : (isTurbo ? '#ffd166' : bodyColor);
+      ctx.shadowBlur = isAirborne || isTurbo ? 16 : 8;
+
+      ctx.fillStyle = '#070b14';
+      ctx.fillRect(dx - 3, dy + 10, 5, 13);
+      ctx.fillRect(dx + dw - 2, dy + 10, 5, 13);
+      ctx.fillRect(dx - 3, dy + dh - 21, 5, 14);
+      ctx.fillRect(dx + dw - 2, dy + dh - 21, 5, 14);
+
+      if (isTurbo) {
+        ctx.fillStyle = '#ffd166';
+        ctx.beginPath();
+        ctx.moveTo(dx + dw * 0.28, dy + dh);
+        ctx.lineTo(dx + dw * 0.5, dy + dh + 18 + Math.random() * 8);
+        ctx.lineTo(dx + dw * 0.72, dy + dh);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#0d1117';
+      ctx.strokeStyle = bodyColor;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.roundRect(dx + 2, dy + 2, dw - 4, dh - 4, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(dx + dw / 2 - 2, dy + 5, 4, 9);
+
+      ctx.fillStyle = '#7dd3fc';
+      ctx.beginPath();
+      ctx.roundRect(dx + 6, dy + 15, dw - 12, 12, 4);
+      ctx.fill();
+
+      ctx.fillStyle = bodyColor;
+      ctx.font = '900 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(carNumber, dx + dw / 2, dy + dh * 0.64);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(dx + 6, dy + 3, 5, 3);
+      ctx.fillRect(dx + dw - 11, dy + 3, 5, 3);
+      ctx.restore();
+    }
+
+    function drawHelicopter(now, w) {
+      heli.x += heli.vx;
+      const maxX = Math.max(110, w - 165);
+      if (heli.x < 28 || heli.x > maxX) heli.vx *= -1;
+      heli.y = 88 + Math.sin(now * 0.004) * 10;
+      heli.rotorAngle += 0.55;
+
+      ctx.save();
+      const beamGrad = ctx.createLinearGradient(heli.x, heli.y + 8, heli.x, heli.y + 165);
+      beamGrad.addColorStop(0, 'rgba(0, 255, 255, 0.22)');
+      beamGrad.addColorStop(1, 'rgba(0, 255, 255, 0)');
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(heli.x - 10, heli.y + 8);
+      ctx.lineTo(heli.x + 10, heli.y + 8);
+      ctx.lineTo(heli.x + 48, heli.y + 165);
+      ctx.lineTo(heli.x - 48, heli.y + 165);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(heli.x + 14, heli.y);
+      ctx.lineTo(heli.x + 36, heli.y - 5);
+      ctx.stroke();
+
+      ctx.fillStyle = '#0d1117';
+      ctx.strokeStyle = '#00ffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(heli.x, heli.y, 16, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      const bladeSpan = Math.cos(heli.rotorAngle) * 26;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(heli.x - bladeSpan, heli.y - 12);
+      ctx.lineTo(heli.x + bladeSpan, heli.y - 12);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ff4d6d';
+      ctx.beginPath();
+      ctx.arc(heli.x - 18, heli.y - 16, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffd166';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('CAM', heli.x - 12, heli.y - 13);
+      ctx.restore();
+    }
+
+    function spawnRaceElements(now) {
+      const road = getRoadBounds();
+
+      if (now - state.lastRiver > 5800) {
+        state.lastRiver = now;
+        rivers.push({ y: -70, h: 52 });
+      }
+
+      if (now - state.lastRamp > 3800) {
+        state.lastRamp = now;
+        ramps.push({
+          x: road.left + 20 + Math.random() * Math.max(20, road.width - 90),
+          y: -35,
+          w: 50,
+          h: 22
+        });
+      }
+
+      if (now - state.lastItem > 1900) {
+        state.lastItem = now;
+        items.push({
+          x: road.left + 20 + Math.random() * (road.width - 40),
+          y: -25,
+          r: 12,
+          type: Math.random() < 0.58 ? 'nitro' : 'repair'
+        });
+      }
+
+      const spawnGap = Math.max(280, 440 - state.stageIndex * 45);
+      if (now - state.lastSpawn > spawnGap) {
+        state.lastSpawn = now;
+
+        if (rallyCars.length < MAX_RALLY_CARS) {
+          const rw = 38;
+          const rh = 62;
+          const rivalSpec = RIVAL_PALETTE[rallyCars.length % RIVAL_PALETTE.length];
+          rallyCars.push({
+            x: road.left + 8 + Math.random() * (road.width - rw - 16),
+            y: -75,
+            w: rw,
+            h: rh,
+            speedOffset: 2.5 + Math.random() * 2.6,
+            vx: (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 1.1),
+            color: rivalSpec.color,
+            num: rivalSpec.num
+          });
+        }
+
+        if (holes.length < 7 && Math.random() < 0.65) {
+          const hr = 15 + Math.random() * 5;
+          holes.push({
+            x: road.left + hr + 8 + Math.random() * (road.width - (hr + 8) * 2),
+            y: -30,
+            r: hr
+          });
+        }
+      }
+    }
+
+    function runAiPilot(now) {
+      const road = getRoadBounds();
+      const car = CARS[state.carKey];
+      const cx = player.x + player.w / 2;
+      let steer = 0;
+
+      for (const hHole of holes) {
+        if (hHole.y > player.y - 210 && hHole.y < player.y + 30) {
+          const dx = hHole.x - cx;
+          if (Math.abs(dx) < hHole.r + player.w * 0.9) {
+            steer += dx >= 0 ? -1.8 : 1.8;
+          }
+        }
+      }
+
+      for (const rc of rallyCars) {
+        const rCx = rc.x + rc.w / 2;
+        if (rc.y > player.y - 220 && rc.y < player.y + 50) {
+          const dx = rCx - cx;
+          if (Math.abs(dx) < (rc.w + player.w) * 0.8) {
+            steer += dx >= 0 ? -1.9 : 1.9;
+          }
+        }
+      }
+
+      if (Math.abs(steer) > 0.25) {
+        player.x += Math.sign(steer) * car.speed;
+      } else if (items.length > 0) {
+        const target = items[0];
+        const diff = target.x - cx;
+        if (Math.abs(diff) > 8) {
+          player.x += Math.sign(diff) * car.speed * 0.8;
+        }
+      }
+
+      player.x = Math.min(Math.max(player.x, road.left + 6), road.right - player.w - 6);
+
+      if (rallyCars.length >= 4) firePulse(now);
+      if (state.nitro >= 75 && now > state.turboActiveUntil) activateTurbo(now);
+    }
+
+    function damageCar(amount) {
+      state.hp -= amount;
+      playFx('crash');
+      if (state.hp <= 0) {
+        state.running = false;
+        document.getElementById('modalTitle').textContent = 'Rally Encerrado!';
+        document.getElementById('finalStats').textContent =
+          `Tempo: ${formatTime(state.elapsedSec)} | Distância: ${Math.floor(state.distance)}m`;
+        document.getElementById('gameOverModal').style.display = 'flex';
+      }
+    }
+
+    function updateHud(now, speed, stage) {
+      const car = CARS[state.carKey];
+      const hpPct = Math.max(0, Math.round((state.hp / car.maxHp) * 100));
+      const nitroPct = Math.max(0, Math.round(state.nitro));
+
+      document.getElementById('barHealth').style.width = `${hpPct}%`;
+      document.getElementById('valHealth').textContent = `${hpPct}%`;
+
+      document.getElementById('barNitro').style.width = `${nitroPct}%`;
+      document.getElementById('valNitro').textContent = `${nitroPct}%`;
+
+      document.getElementById('hudStage').textContent = `${stage.name}`;
+      document.getElementById('hudTimer').textContent =
+        `TEMPO: ${formatTime(state.elapsedSec)} / 02:00:00`;
+      document.getElementById('hudScore').textContent =
+        `VEL: ${Math.round(speed * 21)} KM/H | ${Math.floor(state.distance)}m`;
+
+      const turboBtn = document.getElementById('btnTurbo');
+      const turboLabel = document.getElementById('turboLabel');
+      if (now < state.turboActiveUntil) {
+        turboBtn.disabled = true;
+        turboLabel.textContent = 'ATIVO';
+      } else if (state.nitro < 30) {
+        turboBtn.disabled = true;
+        turboLabel.textContent = 'CARREG.';
+      } else {
+        turboBtn.disabled = false;
+        turboLabel.textContent = 'TURBO';
+      }
+    }
+
+    function loop(now) {
+      if (!state.running) return;
+
+      const dtSec = Math.min(0.25, (now - state.lastTickAt) / 1000);
+      state.lastTickAt = now;
+      state.elapsedSec += dtSec;
+
+      if (state.elapsedSec >= TOTAL_CAMPAIGN_SEC) {
+        state.running = false;
+        document.getElementById('modalTitle').textContent = 'Campanha de 2 Horas Concluída!';
+        document.getElementById('finalStats').textContent =
+          `Completaste 02:00:00 de rally! Distância: ${Math.floor(state.distance)}m`;
+        document.getElementById('gameOverModal').style.display = 'flex';
+        return;
+      }
+
+      const nextStageIdx = STAGES.findIndex((st) => state.elapsedSec < st.endSec);
+      if (nextStageIdx !== -1 && nextStageIdx !== state.stageIndex) {
+        state.stageIndex = nextStageIdx;
+        const c = CARS[state.carKey];
+        state.hp = Math.min(c.maxHp, state.hp + 25);
+        speakAndShow(`Olha a volta! Entrou na ${STAGES[state.stageIndex].name}!`);
+      }
+
+      const stage = STAGES[state.stageIndex];
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const isTurbo = now < state.turboActiveUntil;
+      const isAirborne = now < state.airborneUntil;
+      const stageBoost = state.stageIndex * 1.15;
+      const speed = (state.baseSpeed + stageBoost) * (isTurbo ? 1.55 : 1);
+
+      state.roadOffset += speed;
+      state.distance += speed * (isAirborne ? 0.55 : 0.35);
+      state.nitro = Math.min(100, state.nitro + 0.12);
+
+      if (now > state.nextDustCheckAt) {
+        state.nextDustCheckAt = now + 7500;
+        state.dustStormUntil = now + 2600;
+        const hasHoleAhead = holes.some((hl) => hl.y > player.y - 260 && hl.y < player.y + 40);
+        if (hasHoleAhead) {
+          speakAndShow('Muita poeira na pista! Olha o buraco na frente!');
+        } else {
+          speakAndShow('Muita poeira levantando! Atenção redobrada no volante!');
+        }
+      }
+
+      const heavyDust = now < state.dustStormUntil;
+
+      drawTrackAndRivers(w, h, speed, stage);
+
+      const road = getRoadBounds();
+      const car = CARS[state.carKey];
+
+      let inRiver = false;
+      for (const rv of rivers) {
+        if (!isAirborne && player.y + player.h > rv.y && player.y < rv.y + rv.h) {
+          inRiver = true;
+          break;
+        }
+      }
+
+      if (state.aiMode) {
+        runAiPilot(now);
+      } else {
+        const moveSpd = inRiver ? car.speed * 0.85 : car.speed;
+        if (input.left) player.x -= moveSpd;
+        if (input.right) player.x += moveSpd;
+        player.x = Math.min(Math.max(player.x, road.left + 6), road.right - player.w - 6);
+      }
+
+      spawnRaceElements(now);
+
+      if (!isAirborne && (heavyDust || Math.random() < 0.7)) {
+        spawnDustBurst(player.x + player.w / 2, player.y + player.h, heavyDust);
+      }
+
+      for (let i = ramps.length - 1; i >= 0; i--) {
+        const rp = ramps[i];
+        rp.y += speed;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 210, 255, 0.24)';
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(rp.x, rp.y, rp.w, rp.h, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffd166';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SALTO', rp.x + rp.w / 2, rp.y + rp.h / 2 + 3);
+        ctx.restore();
+
+        const hitRamp =
+          player.x < rp.x + rp.w &&
+          player.x + player.w > rp.x &&
+          player.y < rp.y + rp.h &&
+          player.y + player.h > rp.y;
+
+        if (hitRamp && !isAirborne) {
+          state.airborneUntil = now + 950;
+          state.distance += 45;
+          playFx('pickup');
+          speakAndShow('Salto limpo! Passando por cima dos buracos!');
+          ramps.splice(i, 1);
+          continue;
+        }
+        if (rp.y > h + 40) ramps.splice(i, 1);
+      }
+
+      for (let i = holes.length - 1; i >= 0; i--) {
+        const hl = holes[i];
+        hl.y += speed;
+
+        ctx.save();
+        ctx.fillStyle = '#05070d';
+        ctx.strokeStyle = '#ff4d6d';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(hl.x, hl.y, hl.r, hl.r * 0.78, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        const pCx = player.x + player.w / 2;
+        const pCy = player.y + player.h / 2;
+        const hitHole =
+          !isAirborne &&
+          !isTurbo &&
+          Math.abs(hl.x - pCx) < player.w * 0.42 + hl.r * 0.75 &&
+          Math.abs(hl.y - pCy) < player.h * 0.42 + hl.r * 0.75;
+
+        if (hitHole) {
+          holes.splice(i, 1);
+          speakAndShow('Olha o buraco! Pancada na suspensão!');
+          damageCar(16);
+          if (!state.running) return;
+          continue;
+        }
+        if (hl.y > h + 40) holes.splice(i, 1);
+      }
+
+      for (let i = items.length - 1; i >= 0; i--) {
+        const it = items[i];
+        it.y += speed;
+
+        ctx.save();
+        ctx.fillStyle = it.type === 'nitro' ? '#ffd166' : '#4ade80';
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, it.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#070b14';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(it.type === 'nitro' ? '⚡' : '+', it.x, it.y);
+        ctx.restore();
+
+        const hitItem =
+          it.x + it.r > player.x &&
+          it.x - it.r < player.x + player.w &&
+          it.y + it.r > player.y &&
+          it.y - it.r < player.y + player.h;
+
+        if (hitItem) {
+          playFx('pickup');
+          if (it.type === 'nitro') {
+            state.nitro = Math.min(100, state.nitro + 35);
+          } else {
+            state.hp = Math.min(car.maxHp, state.hp + 25);
+          }
+          items.splice(i, 1);
+          continue;
+        }
+        if (it.y > h + 30) items.splice(i, 1);
+      }
+
+      for (let i = shots.length - 1; i >= 0; i--) {
+        const sh = shots[i];
+        sh.y += sh.vy;
+        ctx.save();
+        ctx.fillStyle = '#00ffff';
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 9;
+        ctx.beginPath();
+        ctx.arc(sh.x, sh.y, sh.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        let hitHole = false;
+        for (let j = holes.length - 1; j >= 0; j--) {
+          const hl = holes[j];
+          if (Math.hypot(sh.x - hl.x, sh.y - hl.y) <= sh.r + hl.r) {
+            holes.splice(j, 1);
+            state.distance += 15;
+            hitHole = true;
+            break;
+          }
+        }
+        if (hitHole || sh.y < -20) shots.splice(i, 1);
+      }
+
+      for (let i = rallyCars.length - 1; i >= 0; i--) {
+        const rc = rallyCars[i];
+        rc.y += speed - rc.speedOffset;
+        rc.x += rc.vx;
+        if (rc.x < road.left + 6 || rc.x + rc.w > road.right - 6) rc.vx *= -1;
+
+        drawRallyCar(rc.x, rc.y, rc.w, rc.h, rc.color, '#ffd166', rc.num, false, false);
+
+        const hitCar =
+          !isAirborne &&
+          player.x < rc.x + rc.w - 4 &&
+          player.x + player.w > rc.x + 4 &&
+          player.y < rc.y + rc.h - 4 &&
+          player.y + player.h > rc.y + 4;
+
+        if (hitCar) {
+          rallyCars.splice(i, 1);
+          if (isTurbo) {
+            state.distance += 40;
+          } else {
+            damageCar(18);
+            if (!state.running) return;
+          }
+          continue;
+        }
+
+        if (rc.y > h + 95) {
+          rallyCars.splice(i, 1);
+          state.distance += 10;
+        }
+      }
+
+      drawRallyCar(player.x, player.y, player.w, player.h, car.body, car.accent, car.num, isTurbo, isAirborne);
+
+      for (let i = dustClouds.length - 1; i >= 0; i--) {
+        const dc = dustClouds[i];
+        dc.x += dc.vx;
+        dc.y += dc.vy + speed * 0.25;
+        dc.alpha -= 0.012;
+        if (dc.alpha <= 0) {
+          dustClouds.splice(i, 1);
+          continue;
+        }
+        ctx.fillStyle = `rgba(217, 167, 96, ${dc.alpha.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(dc.x, dc.y, dc.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      drawHelicopter(now, w);
+      updateHud(now, speed, stage);
+      requestAnimationFrame(loop);
+    }
+
+    document.querySelectorAll('[data-car]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-car]').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.carKey = btn.dataset.car;
+        const c = CARS[state.carKey];
+        player.w = c.w;
+        player.h = c.h;
+        state.hp = Math.min(c.maxHp, Math.max(state.hp, 65));
+        speakAndShow(`Carro #${c.num} ${c.name} selecionado!`);
+      });
+    });
+
+    document.getElementById('btnAi').addEventListener('click', (e) => {
+      state.aiMode = !state.aiMode;
+      e.currentTarget.classList.toggle('active', state.aiMode);
+      e.currentTarget.innerHTML = state.aiMode ? 'IA ATIVA<br>(AUTO)' : 'JOGAR<br>COM IA';
+      speakAndShow(state.aiMode ? 'Piloto IA assumiu o volante!' : 'Controle manual ativado!');
+    });
+
+    document.getElementById('btnSound').addEventListener('click', (e) => {
+      state.soundOn = !state.soundOn;
+      e.currentTarget.classList.toggle('active', state.soundOn);
+      e.currentTarget.innerHTML = state.soundOn ? 'SOM<br>ON' : 'SOM<br>OFF';
+    });
+
+    document.getElementById('btnShot').addEventListener('click', () => {
+      firePulse(performance.now());
+    });
+
+    document.getElementById('btnTurbo').addEventListener('click', () => {
+      activateTurbo(performance.now());
+    });
+
+    function bindHold(el, dir) {
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (state.aiMode) {
+          state.aiMode = false;
+          const aiBtn = document.getElementById('btnAi');
+          aiBtn.classList.remove('active');
+          aiBtn.innerHTML = 'JOGAR<br>COM IA';
+        }
+        input[dir] = true;
+      });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => {
+        el.addEventListener(ev, () => {
+          input[dir] = false;
+        });
+      });
+    }
+
+    bindHold(document.getElementById('btnLeft'), 'left');
+    bindHold(document.getElementById('btnRight'), 'right');
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!state.aiMode && (e.buttons > 0 || e.pointerType === 'touch')) {
+        const road = getRoadBounds();
+        player.x = Math.min(Math.max(e.clientX - player.w / 2, road.left + 6), road.right - player.w - 6);
+      }
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      const c = CARS[state.carKey];
+      state.running = true;
+      state.hp = c.maxHp;
+      state.nitro = 100;
+      state.turboActiveUntil = 0;
+      state.airborneUntil = 0;
+      state.distance = 0;
+      state.stageIndex = 0;
+      state.elapsedSec = 0;
+      state.lastTickAt = performance.now();
+      state.dustStormUntil = 0;
+      rallyCars = [];
+      holes = [];
+      rivers = [];
+      ramps = [];
+      items = [];
+      shots = [];
+      dustClouds = [];
+      document.getElementById('gameOverModal').style.display = 'none';
+      speakAndShow('Largada da campanha de 2 horas! Olha a pista!');
+      requestAnimationFrame(loop);
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    initSandProps();
+    speakAndShow('Campanha 2H iniciada! Clique em JOGAR COM IA ou pilote!');
+    requestAnimationFrame(loop);
+  </script>
+
+  <script data-cfasync="false" src="https://bauval.org/14/5a88615d312cfa2c58147e4b60125525"></script>
+</body>
+</html>
