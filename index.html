@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -7,16 +7,6 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00d2ff">
   <style>
-    :root {
-      --bg-main: #070b14;
-      --bg-panel: #0d1117;
-      --neon-cyan: #00d2ff;
-      --neon-bright: #00ffff;
-      --text-main: #e6edf3;
-      --warn-color: #ff9e00;
-      --enemy-color: #ff4d6d;
-    }
-
     * {
       box-sizing: border-box;
       user-select: none;
@@ -31,8 +21,8 @@
       overflow: hidden;
       overscroll-behavior: none;
       touch-action: none;
-      background-color: var(--bg-main);
-      color: var(--text-main);
+      background: #070b14;
+      color: #e6edf3;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     }
 
@@ -40,205 +30,273 @@
       position: relative;
       width: 100vw;
       height: 100vh;
-      display: flex;
-      background: radial-gradient(circle at top, #101b33 0%, var(--bg-main) 70%);
+      background: #070b14;
     }
 
     canvas {
       display: block;
       width: 100%;
       height: 100%;
+      background: #070b14;
     }
 
-    /* HUD Superior */
-    .hud-top {
+    /* HUD superior estilo barras finas da foto */
+    .hud-bars {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 118px;
+      top: 8px;
+      left: 8px;
+      right: 98px;
       display: flex;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
       gap: 8px;
       z-index: 10;
       pointer-events: none;
     }
 
-    .badge {
-      background: rgba(13, 17, 23, 0.85);
-      border: 1px solid rgba(0, 210, 255, 0.45);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--neon-bright);
-      box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
-    }
-
-    /* Painel Lateral Direito: Naves e Armas */
-    .side-dock {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      bottom: 10px;
-      width: 104px;
-      background: rgba(13, 17, 23, 0.9);
-      border: 1px solid rgba(0, 210, 255, 0.4);
-      border-radius: 12px;
-      padding: 8px 6px;
+    .bars-left {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
+      min-width: 128px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: #7dd3fc;
+    }
+
+    .bar-label {
+      width: 56px;
+      text-transform: uppercase;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(13, 17, 23, 0.9);
+      border: 1px solid rgba(0, 210, 255, 0.35);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00d2ff, #00ffff);
+      transition: width 0.12s linear;
+    }
+
+    .bar-val {
+      font-size: 9px;
+      color: #00ffff;
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .stats-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #00ffff;
+      background: rgba(13, 17, 23, 0.72);
+      border: 1px solid rgba(0, 210, 255, 0.28);
+      border-radius: 6px;
+      padding: 4px 7px;
+    }
+
+    .planet-tag {
+      font-size: 10px;
+      color: #ffd166;
+      text-transform: uppercase;
+    }
+
+    /* Barra lateral discreta para Naves e Armas */
+    .side-dock {
+      position: absolute;
+      top: 8px;
+      right: 6px;
+      bottom: 84px;
+      width: 86px;
+      background: rgba(13, 17, 23, 0.82);
+      border: 1px solid rgba(0, 210, 255, 0.32);
+      border-radius: 10px;
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
       z-index: 15;
       overflow-y: auto;
     }
 
     .dock-title {
-      font-size: 10px;
+      font-size: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--neon-cyan);
+      letter-spacing: 0.5px;
+      color: #00d2ff;
       text-align: center;
       font-weight: 800;
-      margin-top: 2px;
     }
 
     .dock-btn {
-      background: rgba(7, 11, 20, 0.95);
-      border: 1px solid rgba(0, 210, 255, 0.3);
-      color: var(--text-main);
-      border-radius: 8px;
-      padding: 6px 4px;
-      font-size: 10px;
+      background: #070b14;
+      border: 1px solid rgba(0, 210, 255, 0.28);
+      color: #e6edf3;
+      border-radius: 6px;
+      padding: 4px 2px;
+      font-size: 9px;
       font-weight: 700;
       cursor: pointer;
       text-align: center;
-      line-height: 1.2;
-      transition: 0.15s ease;
+      line-height: 1.1;
     }
 
     .dock-btn.active {
-      border-color: var(--neon-bright);
-      background: rgba(0, 210, 255, 0.22);
-      color: #ffffff;
-      box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
+      border-color: #00ffff;
+      background: rgba(0, 210, 255, 0.2);
+      color: #00ffff;
     }
 
     .divider {
       height: 1px;
-      background: rgba(0, 210, 255, 0.25);
-      margin: 3px 0;
+      background: rgba(0, 210, 255, 0.2);
+      margin: 2px 0;
     }
 
-    /* Aviso do Comandante ao chegar no planeta */
+    /* Aviso do Comandante */
     #commanderBanner {
       position: absolute;
-      top: 74px;
-      left: 12px;
-      right: 122px;
-      background: linear-gradient(90deg, rgba(13, 17, 23, 0.96), rgba(16, 34, 58, 0.96));
-      border-left: 4px solid var(--warn-color);
-      border-top: 1px solid rgba(0, 210, 255, 0.45);
-      border-right: 1px solid rgba(0, 210, 255, 0.45);
-      border-bottom: 1px solid rgba(0, 210, 255, 0.45);
-      border-radius: 10px;
-      padding: 10px 12px;
+      top: 76px;
+      left: 10px;
+      right: 100px;
+      background: rgba(13, 17, 23, 0.92);
+      border-left: 3px solid #00ffff;
+      border-top: 1px solid rgba(0, 210, 255, 0.35);
+      border-right: 1px solid rgba(0, 210, 255, 0.35);
+      border-bottom: 1px solid rgba(0, 210, 255, 0.35);
+      border-radius: 8px;
+      padding: 7px 9px;
       z-index: 20;
       display: none;
-      box-shadow: 0 0 18px rgba(0, 210, 255, 0.25);
     }
 
     .cmd-header {
-      font-size: 11px;
+      font-size: 9px;
       font-weight: 800;
-      color: var(--warn-color);
+      color: #00ffff;
       text-transform: uppercase;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
 
     .cmd-text {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
-      color: #ffffff;
+      color: #e6edf3;
     }
 
-    /* Controles inferiores para celular */
+    /* Botões circulares estilo foto + direcionais */
     .controls-bottom {
       position: absolute;
-      bottom: 14px;
-      left: 12px;
-      right: 120px;
+      bottom: 12px;
+      left: 10px;
+      right: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 6px;
-      z-index: 12;
+      z-index: 16;
       pointer-events: none;
     }
 
     .move-group {
       display: flex;
-      gap: 8px;
-      pointer-events: auto;
-    }
-
-    .action-group {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
       gap: 6px;
       pointer-events: auto;
     }
 
     .pad-btn {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      border: 1px solid rgba(0, 210, 255, 0.55);
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 210, 255, 0.45);
       background: rgba(13, 17, 23, 0.85);
-      color: var(--neon-bright);
+      color: #00ffff;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .orb-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      pointer-events: auto;
+    }
+
+    .squad-orb {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 210, 255, 0.45);
+      background: rgba(16, 28, 38, 0.92);
+      color: #00ffff;
       font-size: 18px;
-      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.25);
     }
 
-    .fire-btn {
-      height: 52px;
-      padding: 0 12px;
-      border-radius: 14px;
-      border: 1px solid var(--neon-bright);
-      background: rgba(0, 210, 255, 0.24);
-      color: #ffffff;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.4px;
-      cursor: pointer;
-      line-height: 1.15;
-      box-shadow: 0 0 14px rgba(0, 210, 255, 0.3);
-    }
-
-    .special-btn {
-      height: 52px;
-      padding: 0 11px;
-      border-radius: 14px;
-      border: 1px solid var(--neon-cyan);
-      background: rgba(13, 17, 23, 0.92);
-      color: var(--neon-bright);
-      font-size: 10px;
-      font-weight: 800;
-      cursor: pointer;
-      line-height: 1.15;
-    }
-
-    .special-btn:disabled {
-      opacity: 0.45;
+    .squad-orb:disabled {
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
-    /* Tela de Game Over */
+    .pronto-orb {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid #00ffff;
+      background: radial-gradient(circle, rgba(0, 210, 255, 0.35) 0%, rgba(7, 11, 20, 0.95) 75%);
+      color: #ffd166;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(0, 210, 255, 0.65);
+    }
+
+    .pronto-orb:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .pronto-bolt {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .pronto-txt {
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #e6edf3;
+      margin-top: 2px;
+    }
+
     #gameOverModal {
       position: fixed;
       inset: 0;
-      background: rgba(7, 11, 20, 0.9);
+      background: rgba(7, 11, 20, 0.92);
       display: none;
       flex-direction: column;
       align-items: center;
@@ -249,23 +307,23 @@
     }
 
     #gameOverModal h2 {
-      color: var(--neon-bright);
+      color: #00ffff;
       margin: 0 0 10px;
     }
 
     #gameOverModal p {
       margin: 0 0 18px;
-      color: var(--text-main);
+      color: #e6edf3;
     }
 
     #restartBtn {
-      padding: 12px 24px;
-      border-radius: 10px;
-      border: 1px solid var(--neon-bright);
-      background: var(--neon-cyan);
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: 1px solid #00ffff;
+      background: #00d2ff;
       color: #070b14;
       font-weight: 800;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
     }
   </style>
@@ -274,20 +332,37 @@
   <div id="gameWrapper">
     <canvas id="gameCanvas"></canvas>
 
-    <div class="hud-top">
-      <div class="badge" id="hudPlanet">Planeta: Mercúrio (Nv.1)</div>
-      <div class="badge" id="hudTimer">Próx. Planeta: 60s</div>
-      <div class="badge" id="hudAmmo">Munição: 300</div>
-      <div class="badge" id="hudScore">Pontos: 0</div>
-      <div class="badge" id="hudShield">Escudo: 100%</div>
+    <div class="hud-bars">
+      <div class="bars-left">
+        <div class="bar-row">
+          <span class="bar-label">ESCUDO</span>
+          <div class="bar-track"><div class="bar-fill" id="barShield" style="width:100%"></div></div>
+          <span class="bar-val" id="valShield">100%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">ENERGIA</span>
+          <div class="bar-track"><div class="bar-fill" id="barAmmo" style="width:100%"></div></div>
+          <span class="bar-val" id="valAmmo">300</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">OVERDRIVE</span>
+          <div class="bar-track"><div class="bar-fill" id="barOverdrive" style="width:100%"></div></div>
+          <span class="bar-val" id="valOverdrive">OK</span>
+        </div>
+      </div>
+
+      <div class="stats-right">
+        <span class="planet-tag" id="hudPlanet">DESTINO: VÊNUS</span>
+        <span id="hudScore">PONTOS: 0</span>
+        <span id="hudTimer">PRÓX: 60s</span>
+      </div>
     </div>
 
     <div id="commanderBanner">
-      <div class="cmd-header">Comandante da Frota</div>
+      <div class="cmd-header">Comandante</div>
       <div class="cmd-text" id="commanderMsg"></div>
     </div>
 
-    <!-- Barra lateral direita para escolher Nave e Arma -->
     <aside class="side-dock">
       <div class="dock-title">Naves</div>
       <button class="dock-btn active" data-ship="falcon">Falcon V1</button>
@@ -298,8 +373,8 @@
 
       <div class="dock-title">Armas</div>
       <button class="dock-btn active" data-weapon="laser">Laser Duplo</button>
-      <button class="dock-btn" data-weapon="plasma">Canhão Plasma</button>
-      <button class="dock-btn" data-weapon="spread">Triplo Spread</button>
+      <button class="dock-btn" data-weapon="plasma">Plasma</button>
+      <button class="dock-btn" data-weapon="spread">Triplo</button>
     </aside>
 
     <div class="controls-bottom">
@@ -307,10 +382,13 @@
         <button class="pad-btn" id="btnLeft">◀</button>
         <button class="pad-btn" id="btnRight">▶</button>
       </div>
-      <div class="action-group">
-        <button class="special-btn" id="btnRockCannon">CANHÃO<br>ROCHA</button>
-        <button class="special-btn" id="btnSquadron">ESQUADRÃO<br>NAVES</button>
-        <button class="fire-btn" id="btnAutoFire">TIRO AUTO<br>LIGADO</button>
+
+      <div class="orb-group">
+        <button class="squad-orb" id="btnSquadron" title="Esquadrão de Naves">✦</button>
+        <button class="pronto-orb" id="btnRockCannon" title="Canhão Rocha">
+          <span class="pronto-bolt">⚡</span>
+          <span class="pronto-txt" id="prontoLabel">PRONTO</span>
+        </button>
       </div>
     </div>
   </div>
@@ -328,10 +406,10 @@
     const PLANET_DURATION_MS = 60000;
 
     const PLANETS = [
-      { name: 'Mercúrio', alert: 'Comandante: Atenção! Chegamos a Mercúrio — aviso: cuidado com o desafio de calor, cometas e caças inimigos!' },
-      { name: 'Marte', alert: 'Comandante: Atenção! Avistamos o Planeta Marte — aviso: cuidado com o desafio das tempestades e naves hostis!' },
-      { name: 'Júpiter', alert: 'Comandante: Atenção! Entrando na órbita de Júpiter — aviso: cuidado com o desafio da gravidade e ataque inimigo!' },
-      { name: 'Saturno', alert: 'Comandante: Atenção! Aproximando dos anéis de Saturno — aviso: cuidado com o desafio dos cometas e esquadrão inimigo!' },
+      { name: 'Vênus', alert: 'Comandante: Atenção! Rumo a Vênus — aviso: cuidado com o desafio de calor, cometas e naves hostis!' },
+      { name: 'Marte', alert: 'Comandante: Atenção! Avistamos o Planeta Marte — aviso: cuidado com o desafio das tempestades e cometas!' },
+      { name: 'Júpiter', alert: 'Comandante: Atenção! Entrando na órbita de Júpiter — aviso: cuidado com o desafio da gravidade e enxame de cometas!' },
+      { name: 'Saturno', alert: 'Comandante: Atenção! Aproximando dos anéis de Saturno — aviso: cuidado com o desafio dos cometas em alta velocidade!' },
       { name: 'Netuno', alert: 'Comandante: Atenção! Setor profundo de Netuno — aviso: cuidado com o desafio final do sistema!' }
     ];
 
@@ -343,19 +421,19 @@
 
     const WEAPONS = {
       laser: { name: 'Laser Duplo', cost: 1, cooldown: 145, speed: 10, color: '#00ffff' },
-      plasma: { name: 'Canhão Plasma', cost: 2, cooldown: 195, speed: 8.8, color: '#38bdf8' },
-      spread: { name: 'Triplo Spread', cost: 2, cooldown: 210, speed: 9.2, color: '#7dd3fc' }
+      plasma: { name: 'Plasma', cost: 2, cooldown: 195, speed: 8.8, color: '#00d2ff' },
+      spread: { name: 'Triplo', cost: 2, cooldown: 210, speed: 9.2, color: '#7dd3fc' }
     };
 
     const startTime = performance.now();
 
     let state = {
       running: true,
-      autoFire: true,
       shipKey: 'falcon',
       weaponKey: 'laser',
       shield: 100,
       ammo: 300,
+      maxAmmo: 300,
       score: 0,
       planetIndex: 0,
       planetEnteredAt: startTime,
@@ -369,8 +447,8 @@
     };
 
     const player = {
-      x: 180,
-      y: 500,
+      x: 160,
+      y: 470,
       w: 44,
       h: 52
     };
@@ -394,15 +472,15 @@
       canvas.height = Math.floor(canvas.clientHeight * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      player.y = canvas.clientHeight - 115;
-      player.x = Math.min(Math.max(player.x, 26), Math.max(canvas.clientWidth - 134, 26));
+      player.y = canvas.clientHeight - 130;
+      player.x = Math.min(Math.max(player.x, 18), Math.max(canvas.clientWidth - 115, 18));
     }
 
     function initStars() {
       stars = Array.from({ length: 65 }, () => ({
         x: Math.random() * canvas.clientWidth,
         y: Math.random() * canvas.clientHeight,
-        r: Math.random() * 1.8 + 0.6,
+        r: Math.random() * 1.7 + 0.6,
         v: Math.random() * 1.8 + 0.8
       }));
     }
@@ -416,7 +494,7 @@
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(message);
-        utter.lang = 'pt-BR';
+        utter.lang = 'pt-PT';
         utter.rate = 1.05;
         window.speechSynthesis.speak(utter);
       }
@@ -439,35 +517,46 @@
 
     function updateHUD(now = performance.now()) {
       const planet = PLANETS[state.planetIndex % PLANETS.length];
-      const level = state.planetIndex + 1;
       const elapsedInPlanet = now - state.planetEnteredAt;
       const remainingSec = Math.max(0, Math.ceil((PLANET_DURATION_MS - elapsedInPlanet) / 1000));
+      const maxShield = SHIPS[state.shipKey].maxShield;
+      const shieldPct = Math.max(0, Math.round((state.shield / maxShield) * 100));
+      const ammoPct = Math.max(0, Math.min(100, Math.round((state.ammo / state.maxAmmo) * 100)));
 
-      document.getElementById('hudPlanet').textContent = `Planeta: ${planet.name} (Nv.${level})`;
-      document.getElementById('hudTimer').textContent = `Próx. Planeta: ${remainingSec}s`;
-      document.getElementById('hudAmmo').textContent = `Munição: ${state.ammo}`;
-      document.getElementById('hudScore').textContent = `Pontos: ${state.score}`;
-      document.getElementById('hudShield').textContent = `Escudo: ${Math.max(0, Math.round(state.shield))}%`;
+      document.getElementById('barShield').style.width = `${shieldPct}%`;
+      document.getElementById('valShield').textContent = `${shieldPct}%`;
+
+      document.getElementById('barAmmo').style.width = `${ammoPct}%`;
+      document.getElementById('valAmmo').textContent = `${state.ammo}`;
 
       const cannonBtn = document.getElementById('btnRockCannon');
+      const prontoLabel = document.getElementById('prontoLabel');
       const cannonLeft = Math.ceil((state.cannonCooldownUntil - now) / 1000);
       if (cannonLeft > 0) {
         cannonBtn.disabled = true;
-        cannonBtn.innerHTML = `CANHÃO<br>${cannonLeft}s`;
+        prontoLabel.textContent = `${cannonLeft}s`;
+        document.getElementById('barOverdrive').style.width = '30%';
+        document.getElementById('valOverdrive').textContent = `${cannonLeft}s`;
       } else {
         cannonBtn.disabled = false;
-        cannonBtn.innerHTML = `CANHÃO<br>ROCHA`;
+        prontoLabel.textContent = 'PRONTO';
+        document.getElementById('barOverdrive').style.width = '100%';
+        document.getElementById('valOverdrive').textContent = 'OK';
       }
 
       const sqBtn = document.getElementById('btnSquadron');
       const sqLeft = Math.ceil((state.squadronCooldownUntil - now) / 1000);
       if (sqLeft > 0) {
         sqBtn.disabled = true;
-        sqBtn.innerHTML = `ESQUADRÃO<br>${sqLeft}s`;
+        sqBtn.textContent = `${sqLeft}s`;
       } else {
         sqBtn.disabled = false;
-        sqBtn.innerHTML = `ESQUADRÃO<br>NAVES`;
+        sqBtn.textContent = '✦';
       }
+
+      document.getElementById('hudPlanet').textContent = `DESTINO: ${planet.name.toUpperCase()}`;
+      document.getElementById('hudScore').textContent = `PONTOS: ${state.score}`;
+      document.getElementById('hudTimer').textContent = `PRÓX: ${remainingSec}s`;
     }
 
     function checkPlanetProgression(now) {
@@ -475,6 +564,7 @@
         state.planetIndex += 1;
         state.planetEnteredAt = now;
         state.ammo += 120;
+        state.maxAmmo = Math.max(state.maxAmmo, state.ammo);
         const maxS = SHIPS[state.shipKey].maxShield;
         state.shield = Math.min(maxS, state.shield + 20);
         const planet = PLANETS[state.planetIndex % PLANETS.length];
@@ -483,7 +573,6 @@
     }
 
     function fireWeapon(now) {
-      if (!state.autoFire) return;
       const weapon = WEAPONS[state.weaponKey];
       if (now - state.lastFire < weapon.cooldown) return;
 
@@ -526,10 +615,10 @@
       if (!state.running || now < state.squadronCooldownUntil) return;
       state.squadronCooldownUntil = now + 7000;
 
-      const playableWidth = Math.max(canvas.clientWidth - 130, 120);
+      const playableWidth = Math.max(canvas.clientWidth - 104, 120);
       const count = 4;
       for (let i = 0; i < count; i++) {
-        const laneX = 16 + ((playableWidth - 32) / (count - 1)) * i;
+        const laneX = 14 + ((playableWidth - 28) / (count - 1)) * i;
         wingmen.push({
           x: laneX,
           y: canvas.clientHeight + 25 + i * 14,
@@ -548,13 +637,13 @@
       if (now - state.lastEnemySpawn < spawnInterval) return;
       state.lastEnemySpawn = now;
 
-      const playableWidth = Math.max(canvas.clientWidth - 140, 100);
+      const playableWidth = Math.max(canvas.clientWidth - 114, 100);
       const w = 36;
       const h = 38;
       enemies.push({
         x: Math.random() * playableWidth + 14,
         y: -h,
-        targetY: 75 + Math.random() * 140,
+        targetY: 85 + Math.random() * 140,
         w,
         h,
         vx: (Math.random() < 0.5 ? -1 : 1) * (1.5 + difficulty * 0.35),
@@ -570,7 +659,7 @@
       if (now - state.lastSpawn < spawnInterval) return;
       state.lastSpawn = now;
 
-      const playableWidth = Math.max(canvas.clientWidth - 140, 120);
+      const playableWidth = Math.max(canvas.clientWidth - 114, 120);
       const radius = Math.random() * 11 + 13;
       const baseSpeed = 2.4 + difficulty * 0.75 + Math.random() * 1.6;
       const driftX = (Math.random() - 0.5) * 1.1;
@@ -591,7 +680,7 @@
     function spawnAmmoPickup(now) {
       if (now - state.lastAmmoDrop < 4000) return;
       state.lastAmmoDrop = now;
-      const playableWidth = Math.max(canvas.clientWidth - 140, 120);
+      const playableWidth = Math.max(canvas.clientWidth - 114, 120);
       ammoPickups.push({
         x: Math.random() * playableWidth + 15,
         y: -20,
@@ -601,14 +690,27 @@
       });
     }
 
+    function drawRadarGrid(w, h, now) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 210, 255, 0.22)';
+      const stepX = 56;
+      const stepY = 56;
+      const offset = (now * 0.03) % stepY;
+      for (let gx = 24; gx < w - 95; gx += stepX) {
+        for (let gy = offset; gy < h; gy += stepY) {
+          ctx.fillRect(gx, gy, 2, 2);
+        }
+      }
+      ctx.restore();
+    }
+
     function drawEnemyShip(e) {
       const cx = e.x + e.w / 2;
       ctx.save();
       ctx.strokeStyle = '#ff4d6d';
-      ctx.fillStyle = 'rgba(255, 77, 109, 0.18)';
+      ctx.fillStyle = 'rgba(255, 77, 109, 0.14)';
       ctx.lineWidth = 2;
 
-      // Nave inimiga apontando para baixo
       ctx.beginPath();
       ctx.moveTo(cx, e.y + e.h);
       ctx.lineTo(e.x + e.w, e.y);
@@ -618,10 +720,9 @@
       ctx.fill();
       ctx.stroke();
 
-      // Núcleo inimigo
-      ctx.fillStyle = '#ff758f';
+      ctx.fillStyle = '#ff4d6d';
       ctx.beginPath();
-      ctx.arc(cx, e.y + e.h * 0.45, 4, 0, Math.PI * 2);
+      ctx.arc(cx, e.y + e.h * 0.45, 3.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
@@ -629,7 +730,7 @@
     function drawComet(c) {
       ctx.save();
       const tailGrad = ctx.createLinearGradient(c.x, c.y, c.x - c.vx * 18, c.y - c.r * 3.4);
-      tailGrad.addColorStop(0, 'rgba(0, 210, 255, 0.55)');
+      tailGrad.addColorStop(0, 'rgba(0, 210, 255, 0.45)');
       tailGrad.addColorStop(1, 'rgba(0, 210, 255, 0)');
       ctx.fillStyle = tailGrad;
       ctx.beginPath();
@@ -641,7 +742,7 @@
 
       ctx.translate(c.x, c.y);
       ctx.rotate(c.angle);
-      ctx.fillStyle = '#131c2e';
+      ctx.fillStyle = '#0d1117';
       ctx.strokeStyle = '#00d2ff';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -657,12 +758,6 @@
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(0, 255, 255, 0.45)';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.arc(-c.r * 0.22, -c.r * 0.15, c.r * 0.28, 0, Math.PI * 2);
-      ctx.stroke();
       ctx.restore();
     }
 
@@ -672,7 +767,7 @@
 
       ctx.save();
       ctx.strokeStyle = ship.color;
-      ctx.fillStyle = '#0d1117';
+      ctx.fillStyle = 'rgba(0, 210, 255, 0.14)';
       ctx.lineWidth = 2.2;
 
       ctx.beginPath();
@@ -695,7 +790,7 @@
       const cx = w.x + w.w / 2;
       ctx.save();
       ctx.strokeStyle = '#00ffff';
-      ctx.fillStyle = 'rgba(0, 210, 255, 0.2)';
+      ctx.fillStyle = '#0d1117';
       ctx.lineWidth = 1.8;
 
       ctx.beginPath();
@@ -716,7 +811,10 @@
 
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
-      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#070b14';
+      ctx.fillRect(0, 0, w, h);
+
+      drawRadarGrid(w, h, now);
 
       ctx.fillStyle = '#00d2ff';
       for (const s of stars) {
@@ -733,14 +831,13 @@
       const ship = SHIPS[state.shipKey];
       if (input.left) player.x -= ship.speed;
       if (input.right) player.x += ship.speed;
-      player.x = Math.min(Math.max(player.x, 8), Math.max(w - 116 - player.w, 8));
+      player.x = Math.min(Math.max(player.x, 8), Math.max(w - 96 - player.w, 8));
 
       fireWeapon(now);
       spawnComet(now);
       spawnEnemyShip(now);
       spawnAmmoPickup(now);
 
-      // Naves pequenas aliadas atirando sozinhas
       for (let i = wingmen.length - 1; i >= 0; i--) {
         const wg = wingmen[i];
         if (now > wg.expiresAt) {
@@ -769,7 +866,6 @@
         drawWingman(wg);
       }
 
-      // Projéteis da nossa frota
       for (let i = bullets.length - 1; i >= 0; i--) {
         const b = bullets[i];
         b.x += b.vx;
@@ -790,14 +886,13 @@
         if (b.y < -30) bullets.splice(i, 1);
       }
 
-      // Naves inimigas atacando a nossa nave
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         if (e.y < e.targetY) {
           e.y += e.vy;
         } else {
           e.x += e.vx;
-          if (e.x < 10 || e.x + e.w > w - 118) {
+          if (e.x < 10 || e.x + e.w > w - 98) {
             e.vx *= -1;
           }
         }
@@ -820,7 +915,6 @@
 
         drawEnemyShip(e);
 
-        // Tiros do jogador acertando a nave inimiga
         for (let j = bullets.length - 1; j >= 0; j--) {
           const b = bullets[j];
           const hitPad = b.radius || 4;
@@ -842,7 +936,6 @@
 
         if (!enemies[i]) continue;
 
-        // Colisão direta entre nave inimiga e nossa nave
         const hitPlayer =
           player.x < e.x + e.w &&
           player.x + player.w > e.x &&
@@ -856,7 +949,6 @@
         }
       }
 
-      // Tiros inimigos indo contra a nossa nave
       for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const eb = enemyBullets[i];
         eb.x += eb.vx;
@@ -885,13 +977,12 @@
         if (eb.y > h + 30) enemyBullets.splice(i, 1);
       }
 
-      // Pacotes de munição
       for (let i = ammoPickups.length - 1; i >= 0; i--) {
         const p = ammoPickups[i];
         p.y += p.vy;
 
         ctx.strokeStyle = '#00ffff';
-        ctx.fillStyle = 'rgba(0, 210, 255, 0.25)';
+        ctx.fillStyle = 'rgba(0, 210, 255, 0.2)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -906,20 +997,20 @@
 
         if (hitPlayer) {
           state.ammo += p.amount;
+          state.maxAmmo = Math.max(state.maxAmmo, state.ammo);
           ammoPickups.splice(i, 1);
           continue;
         }
         if (p.y > h + 30) ammoPickups.splice(i, 1);
       }
 
-      // Cometas
       for (let i = comets.length - 1; i >= 0; i--) {
         const c = comets[i];
         c.x += c.vx;
         c.y += c.vy;
         c.angle += c.spin;
 
-        if (c.x < c.r + 6 || c.x > w - 118 - c.r) {
+        if (c.x < c.r + 6 || c.x > w - 98 - c.r) {
           c.vx *= -1;
         }
 
@@ -994,11 +1085,6 @@
       triggerAllySquadron(performance.now());
     });
 
-    document.getElementById('btnAutoFire').addEventListener('click', (e) => {
-      state.autoFire = !state.autoFire;
-      e.currentTarget.innerHTML = state.autoFire ? 'TIRO AUTO<br>LIGADO' : 'TIRO AUTO<br>PAUSADO';
-    });
-
     function bindHold(el, prop) {
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -1017,7 +1103,7 @@
     canvas.addEventListener('pointermove', (e) => {
       if (e.buttons > 0 || e.pointerType === 'touch') {
         const w = canvas.clientWidth;
-        player.x = Math.min(Math.max(e.clientX - player.w / 2, 8), Math.max(w - 116 - player.w, 8));
+        player.x = Math.min(Math.max(e.clientX - player.w / 2, 8), Math.max(w - 96 - player.w, 8));
       }
     });
 
@@ -1038,6 +1124,7 @@
       state.planetIndex = 0;
       state.planetEnteredAt = now;
       state.ammo = 300;
+      state.maxAmmo = 300;
       state.shield = SHIPS[state.shipKey].maxShield;
       state.cannonCooldownUntil = 0;
       state.squadronCooldownUntil = 0;
