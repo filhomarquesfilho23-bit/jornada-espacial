@@ -14,6 +14,7 @@
       --neon-bright: #00ffff;
       --text-main: #e6edf3;
       --warn-color: #ff9e00;
+      --enemy-color: #ff4d6d;
     }
 
     * {
@@ -131,7 +132,7 @@
     /* Aviso do Comandante ao chegar no planeta */
     #commanderBanner {
       position: absolute;
-      top: 68px;
+      top: 74px;
       left: 12px;
       right: 122px;
       background: linear-gradient(90deg, rgba(13, 17, 23, 0.96), rgba(16, 34, 58, 0.96));
@@ -202,15 +203,16 @@
 
     .fire-btn {
       height: 52px;
-      padding: 0 14px;
+      padding: 0 12px;
       border-radius: 14px;
       border: 1px solid var(--neon-bright);
       background: rgba(0, 210, 255, 0.24);
       color: #ffffff;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
       letter-spacing: 0.4px;
       cursor: pointer;
+      line-height: 1.15;
       box-shadow: 0 0 14px rgba(0, 210, 255, 0.3);
     }
 
@@ -274,7 +276,8 @@
 
     <div class="hud-top">
       <div class="badge" id="hudPlanet">Planeta: Mercúrio (Nv.1)</div>
-      <div class="badge" id="hudAmmo">Munição: 260</div>
+      <div class="badge" id="hudTimer">Próx. Planeta: 60s</div>
+      <div class="badge" id="hudAmmo">Munição: 300</div>
       <div class="badge" id="hudScore">Pontos: 0</div>
       <div class="badge" id="hudShield">Escudo: 100%</div>
     </div>
@@ -307,7 +310,7 @@
       <div class="action-group">
         <button class="special-btn" id="btnRockCannon">CANHÃO<br>ROCHA</button>
         <button class="special-btn" id="btnSquadron">ESQUADRÃO<br>NAVES</button>
-        <button class="fire-btn" id="btnFire">DISPARAR</button>
+        <button class="fire-btn" id="btnAutoFire">TIRO AUTO<br>LIGADO</button>
       </div>
     </div>
   </div>
@@ -322,11 +325,13 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
+    const PLANET_DURATION_MS = 60000;
+
     const PLANETS = [
-      { name: 'Mercúrio', alert: 'Comandante: Atenção! Chegamos a Mercúrio — aviso: cuidado com o desafio de calor e meteoros rápidos!' },
-      { name: 'Marte', alert: 'Comandante: Atenção! Avistamos o Planeta Marte — aviso: cuidado com o desafio das tempestades e rochas!' },
-      { name: 'Júpiter', alert: 'Comandante: Atenção! Entrando na órbita de Júpiter — aviso: cuidado com o desafio da gravidade e enxame de asteroides!' },
-      { name: 'Saturno', alert: 'Comandante: Atenção! Aproximando dos anéis de Saturno — aviso: cuidado com o desafio dos fragmentos em alta velocidade!' },
+      { name: 'Mercúrio', alert: 'Comandante: Atenção! Chegamos a Mercúrio — aviso: cuidado com o desafio de calor, cometas e caças inimigos!' },
+      { name: 'Marte', alert: 'Comandante: Atenção! Avistamos o Planeta Marte — aviso: cuidado com o desafio das tempestades e naves hostis!' },
+      { name: 'Júpiter', alert: 'Comandante: Atenção! Entrando na órbita de Júpiter — aviso: cuidado com o desafio da gravidade e ataque inimigo!' },
+      { name: 'Saturno', alert: 'Comandante: Atenção! Aproximando dos anéis de Saturno — aviso: cuidado com o desafio dos cometas e esquadrão inimigo!' },
       { name: 'Netuno', alert: 'Comandante: Atenção! Setor profundo de Netuno — aviso: cuidado com o desafio final do sistema!' }
     ];
 
@@ -337,21 +342,26 @@
     };
 
     const WEAPONS = {
-      laser: { name: 'Laser Duplo', cost: 1, cooldown: 110, speed: 10, color: '#00ffff' },
-      plasma: { name: 'Canhão Plasma', cost: 2, cooldown: 165, speed: 8.5, color: '#38bdf8' },
-      spread: { name: 'Triplo Spread', cost: 2, cooldown: 180, speed: 9, color: '#7dd3fc' }
+      laser: { name: 'Laser Duplo', cost: 1, cooldown: 145, speed: 10, color: '#00ffff' },
+      plasma: { name: 'Canhão Plasma', cost: 2, cooldown: 195, speed: 8.8, color: '#38bdf8' },
+      spread: { name: 'Triplo Spread', cost: 2, cooldown: 210, speed: 9.2, color: '#7dd3fc' }
     };
+
+    const startTime = performance.now();
 
     let state = {
       running: true,
+      autoFire: true,
       shipKey: 'falcon',
       weaponKey: 'laser',
       shield: 100,
-      ammo: 260,
+      ammo: 300,
       score: 0,
       planetIndex: 0,
+      planetEnteredAt: startTime,
       lastFire: 0,
       lastSpawn: 0,
+      lastEnemySpawn: 0,
       lastAmmoDrop: 0,
       cannonCooldownUntil: 0,
       squadronCooldownUntil: 0,
@@ -367,12 +377,13 @@
 
     const input = {
       left: false,
-      right: false,
-      fire: false
+      right: false
     };
 
     let bullets = [];
-    let obstacles = [];
+    let enemyBullets = [];
+    let enemies = [];
+    let comets = [];
     let ammoPickups = [];
     let wingmen = [];
     let stars = [];
@@ -413,13 +424,27 @@
       clearTimeout(state.bannerTimeout);
       state.bannerTimeout = setTimeout(() => {
         banner.style.display = 'none';
-      }, 4200);
+      }, 4500);
+    }
+
+    function damagePlayer(amount) {
+      state.shield -= amount;
+      if (state.shield <= 0) {
+        state.running = false;
+        document.getElementById('finalStats').textContent =
+          `Pontuação final: ${state.score} | Planeta alcançado: ${PLANETS[state.planetIndex % PLANETS.length].name}`;
+        document.getElementById('gameOverModal').style.display = 'flex';
+      }
     }
 
     function updateHUD(now = performance.now()) {
       const planet = PLANETS[state.planetIndex % PLANETS.length];
       const level = state.planetIndex + 1;
+      const elapsedInPlanet = now - state.planetEnteredAt;
+      const remainingSec = Math.max(0, Math.ceil((PLANET_DURATION_MS - elapsedInPlanet) / 1000));
+
       document.getElementById('hudPlanet').textContent = `Planeta: ${planet.name} (Nv.${level})`;
+      document.getElementById('hudTimer').textContent = `Próx. Planeta: ${remainingSec}s`;
       document.getElementById('hudAmmo').textContent = `Munição: ${state.ammo}`;
       document.getElementById('hudScore').textContent = `Pontos: ${state.score}`;
       document.getElementById('hudShield').textContent = `Escudo: ${Math.max(0, Math.round(state.shield))}%`;
@@ -445,11 +470,11 @@
       }
     }
 
-    function checkPlanetProgression() {
-      const nextPlanetIndex = Math.floor(state.score / 250);
-      if (nextPlanetIndex > state.planetIndex) {
-        state.planetIndex = nextPlanetIndex;
-        state.ammo += 90;
+    function checkPlanetProgression(now) {
+      if (now - state.planetEnteredAt >= PLANET_DURATION_MS) {
+        state.planetIndex += 1;
+        state.planetEnteredAt = now;
+        state.ammo += 120;
         const maxS = SHIPS[state.shipKey].maxShield;
         state.shield = Math.min(maxS, state.shield + 20);
         const planet = PLANETS[state.planetIndex % PLANETS.length];
@@ -458,11 +483,12 @@
     }
 
     function fireWeapon(now) {
+      if (!state.autoFire) return;
       const weapon = WEAPONS[state.weaponKey];
       if (now - state.lastFire < weapon.cooldown) return;
 
       if (state.ammo <= 0) {
-        state.ammo = 70;
+        state.ammo = 100;
       }
 
       const shotCost = Math.min(weapon.cost, state.ammo);
@@ -484,7 +510,6 @@
       }
     }
 
-    // Botão 1: Sai canhão pesado para destruir rochas
     function triggerRockCannon(now) {
       if (!state.running || now < state.cannonCooldownUntil) return;
       state.cannonCooldownUntil = now + 2200;
@@ -492,13 +517,11 @@
       const centerX = player.x + player.w / 2;
       const topY = player.y - 6;
 
-      // Dispara um canhão de rocha triplo de alto impacto
       bullets.push({ x: centerX, y: topY, vx: 0, vy: -13, dmg: 10, color: '#00ffff', radius: 11, isCannon: true });
       bullets.push({ x: centerX - 18, y: topY + 8, vx: -1.4, vy: -12, dmg: 8, color: '#00d2ff', radius: 8, isCannon: true });
       bullets.push({ x: centerX + 18, y: topY + 8, vx: 1.4, vy: -12, dmg: 8, color: '#00d2ff', radius: 8, isCannon: true });
     }
 
-    // Botão 2: Saem várias naves pequenas atirando para ajudar
     function triggerAllySquadron(now) {
       if (!state.running || now < state.squadronCooldownUntil) return;
       state.squadronCooldownUntil = now + 7000;
@@ -519,29 +542,54 @@
       }
     }
 
-    function spawnObstacle(now) {
+    function spawnEnemyShip(now) {
+      const difficulty = state.planetIndex;
+      const spawnInterval = Math.max(1100, 2600 - difficulty * 260);
+      if (now - state.lastEnemySpawn < spawnInterval) return;
+      state.lastEnemySpawn = now;
+
+      const playableWidth = Math.max(canvas.clientWidth - 140, 100);
+      const w = 36;
+      const h = 38;
+      enemies.push({
+        x: Math.random() * playableWidth + 14,
+        y: -h,
+        targetY: 75 + Math.random() * 140,
+        w,
+        h,
+        vx: (Math.random() < 0.5 ? -1 : 1) * (1.5 + difficulty * 0.35),
+        vy: 2.2,
+        hp: 2 + Math.floor(difficulty / 2),
+        lastShot: now + 450
+      });
+    }
+
+    function spawnComet(now) {
       const difficulty = state.planetIndex;
       const spawnInterval = Math.max(260, 820 - difficulty * 110);
       if (now - state.lastSpawn < spawnInterval) return;
       state.lastSpawn = now;
 
       const playableWidth = Math.max(canvas.clientWidth - 140, 120);
-      const size = Math.random() * 20 + 24;
+      const radius = Math.random() * 11 + 13;
       const baseSpeed = 2.4 + difficulty * 0.75 + Math.random() * 1.6;
+      const driftX = (Math.random() - 0.5) * 1.1;
       const hp = 1 + Math.floor(difficulty / 2);
 
-      obstacles.push({
-        x: Math.random() * playableWidth + 10,
-        y: -size,
-        w: size,
-        h: size,
+      comets.push({
+        x: Math.random() * playableWidth + 24,
+        y: -radius * 2,
+        r: radius,
+        vx: driftX,
         vy: baseSpeed,
+        angle: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 0.06,
         hp
       });
     }
 
     function spawnAmmoPickup(now) {
-      if (now - state.lastAmmoDrop < 4200) return;
+      if (now - state.lastAmmoDrop < 4000) return;
       state.lastAmmoDrop = now;
       const playableWidth = Math.max(canvas.clientWidth - 140, 120);
       ammoPickups.push({
@@ -549,8 +597,73 @@
         y: -20,
         r: 11,
         vy: 2.2,
-        amount: 80
+        amount: 90
       });
+    }
+
+    function drawEnemyShip(e) {
+      const cx = e.x + e.w / 2;
+      ctx.save();
+      ctx.strokeStyle = '#ff4d6d';
+      ctx.fillStyle = 'rgba(255, 77, 109, 0.18)';
+      ctx.lineWidth = 2;
+
+      // Nave inimiga apontando para baixo
+      ctx.beginPath();
+      ctx.moveTo(cx, e.y + e.h);
+      ctx.lineTo(e.x + e.w, e.y);
+      ctx.lineTo(cx, e.y + 10);
+      ctx.lineTo(e.x, e.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Núcleo inimigo
+      ctx.fillStyle = '#ff758f';
+      ctx.beginPath();
+      ctx.arc(cx, e.y + e.h * 0.45, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawComet(c) {
+      ctx.save();
+      const tailGrad = ctx.createLinearGradient(c.x, c.y, c.x - c.vx * 18, c.y - c.r * 3.4);
+      tailGrad.addColorStop(0, 'rgba(0, 210, 255, 0.55)');
+      tailGrad.addColorStop(1, 'rgba(0, 210, 255, 0)');
+      ctx.fillStyle = tailGrad;
+      ctx.beginPath();
+      ctx.moveTo(c.x - c.r * 0.85, c.y);
+      ctx.lineTo(c.x - c.vx * 18, c.y - c.r * 3.4);
+      ctx.lineTo(c.x + c.r * 0.85, c.y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.angle);
+      ctx.fillStyle = '#131c2e';
+      ctx.strokeStyle = '#00d2ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const sides = 7;
+      for (let i = 0; i < sides; i++) {
+        const a = (i / sides) * Math.PI * 2;
+        const rad = c.r * (i % 2 === 0 ? 1 : 0.82);
+        const px = Math.cos(a) * rad;
+        const py = Math.sin(a) * rad;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(-c.r * 0.22, -c.r * 0.15, c.r * 0.28, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     }
 
     function drawShip() {
@@ -599,6 +712,8 @@
     function loop(now) {
       if (!state.running) return;
 
+      checkPlanetProgression(now);
+
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       ctx.clearRect(0, 0, w, h);
@@ -620,14 +735,12 @@
       if (input.right) player.x += ship.speed;
       player.x = Math.min(Math.max(player.x, 8), Math.max(w - 116 - player.w, 8));
 
-      if (input.fire) {
-        fireWeapon(now);
-      }
-
-      spawnObstacle(now);
+      fireWeapon(now);
+      spawnComet(now);
+      spawnEnemyShip(now);
       spawnAmmoPickup(now);
 
-      // Naves pequenas aliadas atirando para ajudar
+      // Naves pequenas aliadas atirando sozinhas
       for (let i = wingmen.length - 1; i >= 0; i--) {
         const wg = wingmen[i];
         if (now > wg.expiresAt) {
@@ -656,7 +769,7 @@
         drawWingman(wg);
       }
 
-      // Projéteis
+      // Projéteis da nossa frota
       for (let i = bullets.length - 1; i >= 0; i--) {
         const b = bullets[i];
         b.x += b.vx;
@@ -675,6 +788,101 @@
         ctx.restore();
 
         if (b.y < -30) bullets.splice(i, 1);
+      }
+
+      // Naves inimigas atacando a nossa nave
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        if (e.y < e.targetY) {
+          e.y += e.vy;
+        } else {
+          e.x += e.vx;
+          if (e.x < 10 || e.x + e.w > w - 118) {
+            e.vx *= -1;
+          }
+        }
+
+        const fireInterval = Math.max(700, 1450 - state.planetIndex * 140);
+        if (now - e.lastShot > fireInterval) {
+          e.lastShot = now;
+          const enemyCx = e.x + e.w / 2;
+          const playerCx = player.x + player.w / 2;
+          const aimX = Math.max(-2.2, Math.min(2.2, (playerCx - enemyCx) * 0.012));
+          enemyBullets.push({
+            x: enemyCx,
+            y: e.y + e.h,
+            vx: aimX,
+            vy: 5.2 + state.planetIndex * 0.45,
+            r: 4.5,
+            dmg: 10 + state.planetIndex * 2
+          });
+        }
+
+        drawEnemyShip(e);
+
+        // Tiros do jogador acertando a nave inimiga
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          const b = bullets[j];
+          const hitPad = b.radius || 4;
+          if (
+            b.x + hitPad > e.x &&
+            b.x - hitPad < e.x + e.w &&
+            b.y + hitPad > e.y &&
+            b.y - hitPad < e.y + e.h
+          ) {
+            e.hp -= b.dmg;
+            if (!b.isCannon) bullets.splice(j, 1);
+            if (e.hp <= 0) {
+              state.score += 40;
+              enemies.splice(i, 1);
+              break;
+            }
+          }
+        }
+
+        if (!enemies[i]) continue;
+
+        // Colisão direta entre nave inimiga e nossa nave
+        const hitPlayer =
+          player.x < e.x + e.w &&
+          player.x + player.w > e.x &&
+          player.y < e.y + e.h &&
+          player.y + player.h > e.y;
+
+        if (hitPlayer) {
+          enemies.splice(i, 1);
+          damagePlayer(20 + state.planetIndex * 3);
+          if (!state.running) return;
+        }
+      }
+
+      // Tiros inimigos indo contra a nossa nave
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const eb = enemyBullets[i];
+        eb.x += eb.vx;
+        eb.y += eb.vy;
+
+        ctx.save();
+        ctx.fillStyle = '#ff4d6d';
+        ctx.beginPath();
+        ctx.arc(eb.x, eb.y, eb.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        const hitPlayer =
+          eb.x + eb.r > player.x &&
+          eb.x - eb.r < player.x + player.w &&
+          eb.y + eb.r > player.y &&
+          eb.y - eb.r < player.y + player.h;
+
+        if (hitPlayer) {
+          enemyBullets.splice(i, 1);
+          damagePlayer(eb.dmg);
+          if (!state.running) return;
+          continue;
+        }
+
+        if (eb.y > h + 30) enemyBullets.splice(i, 1);
       }
 
       // Pacotes de munição
@@ -704,64 +912,55 @@
         if (p.y > h + 30) ammoPickups.splice(i, 1);
       }
 
-      // Rochas / Obstáculos
-      for (let i = obstacles.length - 1; i >= 0; i--) {
-        const obs = obstacles[i];
-        obs.y += obs.vy;
+      // Cometas
+      for (let i = comets.length - 1; i >= 0; i--) {
+        const c = comets[i];
+        c.x += c.vx;
+        c.y += c.vy;
+        c.angle += c.spin;
 
-        ctx.strokeStyle = '#00d2ff';
-        ctx.fillStyle = 'rgba(13, 17, 23, 0.92)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
-        ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        if (c.x < c.r + 6 || c.x > w - 118 - c.r) {
+          c.vx *= -1;
+        }
+
+        drawComet(c);
 
         for (let j = bullets.length - 1; j >= 0; j--) {
           const b = bullets[j];
-          const hitRadius = b.radius || 4;
-          if (
-            b.x + hitRadius > obs.x &&
-            b.x - hitRadius < obs.x + obs.w &&
-            b.y + hitRadius > obs.y &&
-            b.y - hitRadius < obs.y + obs.h
-          ) {
-            obs.hp -= b.dmg;
+          const hitRadius = (b.radius || 4) + c.r;
+          const dx = b.x - c.x;
+          const dy = b.y - c.y;
+          if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+            c.hp -= b.dmg;
             if (!b.isCannon) {
               bullets.splice(j, 1);
             }
-            if (obs.hp <= 0) {
+            if (c.hp <= 0) {
               state.score += 25;
-              checkPlanetProgression();
-              obstacles.splice(i, 1);
+              comets.splice(i, 1);
               break;
             }
           }
         }
 
-        if (!obstacles[i]) continue;
+        if (!comets[i]) continue;
 
-        const collided =
-          player.x < obs.x + obs.w &&
-          player.x + player.w > obs.x &&
-          player.y < obs.y + obs.h &&
-          player.y + player.h > obs.y;
+        const playerCx = player.x + player.w / 2;
+        const playerCy = player.y + player.h / 2;
+        const distX = Math.abs(c.x - playerCx);
+        const distY = Math.abs(c.y - playerCy);
+        const collided = distX < player.w * 0.42 + c.r && distY < player.h * 0.42 + c.r;
 
         if (collided) {
-          state.shield -= 22 + state.planetIndex * 3;
-          obstacles.splice(i, 1);
-          if (state.shield <= 0) {
-            state.running = false;
-            document.getElementById('finalStats').textContent =
-              `Pontuação final: ${state.score} | Planeta alcançado: ${PLANETS[state.planetIndex % PLANETS.length].name}`;
-            document.getElementById('gameOverModal').style.display = 'flex';
-            return;
-          }
+          comets.splice(i, 1);
+          damagePlayer(22 + state.planetIndex * 3);
+          if (!state.running) return;
           continue;
         }
 
-        if (obs.y > h + 40) {
+        if (c.y > h + 40) {
           state.score += 5;
-          checkPlanetProgression();
-          obstacles.splice(i, 1);
+          comets.splice(i, 1);
         }
       }
 
@@ -795,6 +994,11 @@
       triggerAllySquadron(performance.now());
     });
 
+    document.getElementById('btnAutoFire').addEventListener('click', (e) => {
+      state.autoFire = !state.autoFire;
+      e.currentTarget.innerHTML = state.autoFire ? 'TIRO AUTO<br>LIGADO' : 'TIRO AUTO<br>PAUSADO';
+    });
+
     function bindHold(el, prop) {
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -809,30 +1013,38 @@
 
     bindHold(document.getElementById('btnLeft'), 'left');
     bindHold(document.getElementById('btnRight'), 'right');
-    bindHold(document.getElementById('btnFire'), 'fire');
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (e.buttons > 0 || e.pointerType === 'touch') {
+        const w = canvas.clientWidth;
+        player.x = Math.min(Math.max(e.clientX - player.w / 2, 8), Math.max(w - 116 - player.w, 8));
+      }
+    });
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'a') input.left = true;
       if (e.key === 'ArrowRight' || e.key === 'd') input.right = true;
-      if (e.key === ' ' || e.key === 'ArrowUp') input.fire = true;
     });
 
     window.addEventListener('keyup', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'a') input.left = false;
       if (e.key === 'ArrowRight' || e.key === 'd') input.right = false;
-      if (e.key === ' ' || e.key === 'ArrowUp') input.fire = false;
     });
 
     document.getElementById('restartBtn').addEventListener('click', () => {
+      const now = performance.now();
       state.running = true;
       state.score = 0;
       state.planetIndex = 0;
-      state.ammo = 260;
+      state.planetEnteredAt = now;
+      state.ammo = 300;
       state.shield = SHIPS[state.shipKey].maxShield;
       state.cannonCooldownUntil = 0;
       state.squadronCooldownUntil = 0;
       bullets = [];
-      obstacles = [];
+      enemyBullets = [];
+      enemies = [];
+      comets = [];
       ammoPickups = [];
       wingmen = [];
       document.getElementById('gameOverModal').style.display = 'none';
