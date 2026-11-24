@@ -40,7 +40,6 @@
       background: #070b14;
     }
 
-    /* HUD superior estilo barras finas */
     .hud-bars {
       position: absolute;
       top: 8px;
@@ -118,7 +117,6 @@
       text-transform: uppercase;
     }
 
-    /* Barra lateral discreta para Naves e Armas */
     .side-dock {
       position: absolute;
       top: 8px;
@@ -170,7 +168,6 @@
       margin: 2px 0;
     }
 
-    /* Aviso do Comandante */
     #commanderBanner {
       position: absolute;
       top: 76px;
@@ -201,7 +198,6 @@
       color: #e6edf3;
     }
 
-    /* Botões circulares + direcionais bem acima da barra inferior do Android */
     .controls-bottom {
       position: absolute;
       bottom: calc(44px + env(safe-area-inset-bottom, 0px));
@@ -352,7 +348,7 @@
       </div>
 
       <div class="stats-right">
-        <span class="planet-tag" id="hudPlanet">DESTINO: VÊNUS</span>
+        <span class="planet-tag" id="hudPlanet">DESTINO: ÓRBITA INICIAL</span>
         <span id="hudScore">PONTOS: 0</span>
         <span id="hudTimer">PRÓX: 60s</span>
       </div>
@@ -375,6 +371,11 @@
       <button class="dock-btn active" data-weapon="laser">Laser Duplo</button>
       <button class="dock-btn" data-weapon="plasma">Plasma</button>
       <button class="dock-btn" data-weapon="spread">Triplo</button>
+
+      <div class="divider"></div>
+
+      <div class="dock-title">Modo</div>
+      <button class="dock-btn" id="btnAiMode">PILOTO IA<br>DESLIGADO</button>
     </aside>
 
     <div class="controls-bottom">
@@ -408,15 +409,23 @@
     const STAR_COLORS = ['#00ffff', '#ffd166', '#ff758f', '#7dd3fc', '#4ade80', '#f472b6', '#ffffff'];
     const ROCK_COLORS = ['#ff9e00', '#ff6b35', '#ffd166', '#fb7185', '#38bdf8', '#f59e0b'];
 
+    // Etapa 0 começa no cenário original escuro; cada etapa concluída libera um cenário novo
     const PLANETS = [
+      {
+        name: 'Órbita Inicial',
+        theme: 'classic',
+        bgTop: '#070b14',
+        bgBottom: '#070b14',
+        nebula: 'rgba(0, 210, 255, 0.05)',
+        alert: 'Comandante: Atenção! Missão iniciada no setor espacial — aviso: cuidado com o desafio das rochas e naves!'
+      },
       {
         name: 'Vênus',
         theme: 'venus',
         bgTop: '#241608',
         bgBottom: '#070b14',
         nebula: 'rgba(255, 179, 71, 0.16)',
-        accent: '#ffb347',
-        alert: 'Comandante: Atenção! Rumo a Vênus — aviso: cuidado com o desafio de calor, rochas, satélites e naves hostis!'
+        alert: 'Comandante: Atenção! Etapa concluída, chegamos a Vênus — aviso: cuidado com o desafio de calor, rochas, satélites e naves hostis!'
       },
       {
         name: 'Marte',
@@ -424,7 +433,6 @@
         bgTop: '#290d0c',
         bgBottom: '#070b14',
         nebula: 'rgba(255, 77, 109, 0.16)',
-        accent: '#ff6b6b',
         alert: 'Comandante: Atenção! Avistamos o Planeta Marte — aviso: cuidado com o desafio das tempestades e batalhas no espaço!'
       },
       {
@@ -433,7 +441,6 @@
         bgTop: '#161b33',
         bgBottom: '#070b14',
         nebula: 'rgba(56, 189, 248, 0.15)',
-        accent: '#38bdf8',
         alert: 'Comandante: Atenção! Entrando na órbita de Júpiter — aviso: cuidado com o desafio da gravidade e enxame de rochas!'
       },
       {
@@ -442,7 +449,6 @@
         bgTop: '#1b1330',
         bgBottom: '#070b14',
         nebula: 'rgba(192, 132, 252, 0.16)',
-        accent: '#c084fc',
         alert: 'Comandante: Atenção! Aproximando dos anéis de Saturno — aviso: cuidado com o desafio dos satélites e naves em alta velocidade!'
       },
       {
@@ -451,7 +457,6 @@
         bgTop: '#071f2b',
         bgBottom: '#070b14',
         nebula: 'rgba(0, 255, 255, 0.15)',
-        accent: '#00ffff',
         alert: 'Comandante: Atenção! Setor profundo de Netuno — aviso: cuidado com o desafio final do sistema!'
       }
     ];
@@ -472,6 +477,7 @@
 
     let state = {
       running: true,
+      aiMode: false,
       shipKey: 'falcon',
       weaponKey: 'laser',
       shield: 100,
@@ -559,14 +565,19 @@
       }));
     }
 
-    function drawPlanetScenario(w, h, now, planet) {
+    function drawStageScenario(w, h, now, planet) {
+      if (planet.theme === 'classic') {
+        ctx.fillStyle = '#070b14';
+        ctx.fillRect(0, 0, w, h);
+        return;
+      }
+
       const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
       bgGrad.addColorStop(0, planet.bgTop);
       bgGrad.addColorStop(1, planet.bgBottom);
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // Nuvem/nebulosa temática do planeta atual
       const cx = (w - 90) * 0.5;
       const cy = h * 0.34;
       const nebGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(w, h) * 0.45);
@@ -577,7 +588,6 @@
 
       ctx.save();
       if (planet.theme === 'venus') {
-        // Ondas quentes de atmosfera de Vênus
         ctx.strokeStyle = 'rgba(255, 179, 71, 0.16)';
         ctx.lineWidth = 2;
         for (let i = 0; i < 4; i++) {
@@ -588,14 +598,12 @@
           ctx.stroke();
         }
       } else if (planet.theme === 'mars') {
-        // Faixas de poeira marciana ao fundo
         ctx.fillStyle = 'rgba(255, 107, 107, 0.08)';
         for (let i = 0; i < 5; i++) {
           const bandY = ((now * 0.05 + i * 130) % (h + 60)) - 30;
           ctx.fillRect(0, bandY, w, 14);
         }
       } else if (planet.theme === 'jupiter') {
-        // Faixas atmosféricas largas de Júpiter
         const stripeColors = ['rgba(56, 189, 248, 0.09)', 'rgba(255, 209, 102, 0.07)'];
         for (let i = 0; i < 6; i++) {
           const yPos = ((now * 0.03 + i * 105) % (h + 60)) - 30;
@@ -603,7 +611,6 @@
           ctx.fillRect(0, yPos, w, 20);
         }
       } else if (planet.theme === 'saturn') {
-        // Anéis de Saturno inclinados ao fundo
         ctx.strokeStyle = 'rgba(192, 132, 252, 0.22)';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -615,7 +622,6 @@
         ctx.ellipse(cx, cy, w * 0.52, 30, -0.22, 0, Math.PI * 2);
         ctx.stroke();
       } else if (planet.theme === 'neptune') {
-        // Linhas verticais de vento gelado de Netuno
         ctx.strokeStyle = 'rgba(0, 255, 255, 0.12)';
         ctx.lineWidth = 1.5;
         for (let i = 0; i < 6; i++) {
@@ -654,7 +660,7 @@
       if (state.shield <= 0) {
         state.running = false;
         document.getElementById('finalStats').textContent =
-          `Pontuação final: ${state.score} | Planeta alcançado: ${PLANETS[state.planetIndex % PLANETS.length].name}`;
+          `Pontuação final: ${state.score} | Etapa alcançada: ${PLANETS[state.planetIndex % PLANETS.length].name}`;
         document.getElementById('gameOverModal').style.display = 'flex';
       }
     }
@@ -770,6 +776,56 @@
           lastShot: now,
           expiresAt: now + 6500
         });
+      }
+    }
+
+    function runAiPilot(now, w) {
+      const ship = SHIPS[state.shipKey];
+      const cx = player.x + player.w / 2;
+      const minX = 12;
+      const maxX = Math.max(w - 100 - player.w, minX);
+
+      let danger = 0;
+      for (const c of comets) {
+        if (c.y > player.y - 210 && c.y < player.y + 40) {
+          const dx = c.x - cx;
+          if (Math.abs(dx) < c.r + 36) {
+            danger += dx >= 0 ? -1.4 : 1.4;
+          }
+        }
+      }
+      for (const eb of enemyBullets) {
+        if (eb.y > player.y - 190 && eb.y < player.y + 30) {
+          const dx = eb.x - cx;
+          if (Math.abs(dx) < eb.r + 28) {
+            danger += dx >= 0 ? -1.6 : 1.6;
+          }
+        }
+      }
+
+      if (Math.abs(danger) > 0.25) {
+        player.x += Math.sign(danger) * ship.speed;
+      } else if (yellowLights.length > 0) {
+        const targetLight = yellowLights[0];
+        const diff = targetLight.x - cx;
+        if (Math.abs(diff) > 6) {
+          player.x += Math.sign(diff) * ship.speed * 0.85;
+        }
+      } else if (comets.length > 0) {
+        const targetComet = comets[0];
+        const diff = targetComet.x - cx;
+        if (Math.abs(diff) > 8) {
+          player.x += Math.sign(diff) * ship.speed * 0.7;
+        }
+      }
+
+      player.x = Math.min(Math.max(player.x, minX), maxX);
+
+      if (now >= state.cannonCooldownUntil && comets.length + enemies.length >= 4) {
+        triggerRockCannon(now);
+      }
+      if (now >= state.squadronCooldownUntil && comets.length + enemies.length >= 5) {
+        triggerAllySquadron(now);
       }
     }
 
@@ -963,7 +1019,7 @@
       const cx = player.x + player.w / 2;
 
       ctx.save();
-      ctx.strokeStyle = ship.color;
+      ctx.strokeStyle = state.aiMode ? '#ffd166' : ship.color;
       ctx.fillStyle = 'rgba(0, 210, 255, 0.14)';
       ctx.lineWidth = 2.2;
 
@@ -976,7 +1032,7 @@
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = '#00ffff';
+      ctx.fillStyle = state.aiMode ? '#ffd166' : '#00ffff';
       ctx.beginPath();
       ctx.arc(cx, player.y + player.h - 6, 4 + Math.random() * 2, 0, Math.PI * 2);
       ctx.fill();
@@ -1009,7 +1065,7 @@
       const planet = PLANETS[state.planetIndex % PLANETS.length];
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
-      drawPlanetScenario(w, h, now, planet);
+      drawStageScenario(w, h, now, planet);
 
       for (const s of stars) {
         s.y += s.v + state.planetIndex * 0.35;
@@ -1029,9 +1085,13 @@
       }
 
       const ship = SHIPS[state.shipKey];
-      if (input.left) player.x -= ship.speed;
-      if (input.right) player.x += ship.speed;
-      player.x = Math.min(Math.max(player.x, 8), Math.max(w - 96 - player.w, 8));
+      if (state.aiMode) {
+        runAiPilot(now, w);
+      } else {
+        if (input.left) player.x -= ship.speed;
+        if (input.right) player.x += ship.speed;
+        player.x = Math.min(Math.max(player.x, 8), Math.max(w - 96 - player.w, 8));
+      }
 
       fireWeapon(now);
       spawnComet(now);
@@ -1371,6 +1431,12 @@
       });
     });
 
+    document.getElementById('btnAiMode').addEventListener('click', (e) => {
+      state.aiMode = !state.aiMode;
+      e.currentTarget.classList.toggle('active', state.aiMode);
+      e.currentTarget.innerHTML = state.aiMode ? 'PILOTO IA<br>LIGADO' : 'PILOTO IA<br>DESLIGADO';
+    });
+
     document.getElementById('btnRockCannon').addEventListener('click', () => {
       triggerRockCannon(performance.now());
     });
@@ -1382,6 +1448,10 @@
     function bindHold(el, prop) {
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
+        state.aiMode = false;
+        const aiBtn = document.getElementById('btnAiMode');
+        aiBtn.classList.remove('active');
+        aiBtn.innerHTML = 'PILOTO IA<br>DESLIGADO';
         input[prop] = true;
       });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => {
@@ -1395,7 +1465,7 @@
     bindHold(document.getElementById('btnRight'), 'right');
 
     canvas.addEventListener('pointermove', (e) => {
-      if (e.buttons > 0 || e.pointerType === 'touch') {
+      if (!state.aiMode && (e.buttons > 0 || e.pointerType === 'touch')) {
         const w = canvas.clientWidth;
         player.x = Math.min(Math.max(e.clientX - player.w / 2, 8), Math.max(w - 96 - player.w, 8));
       }
